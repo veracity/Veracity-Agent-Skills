@@ -6,6 +6,16 @@ The skills live under `skills/`. Install them with the Skills CLI as shown below
 
 ---
 
+## Installation
+
+With Node.js and `npx` available, run this command from the project where you want to use the skills:
+
+```bash
+npx skills add https://github.com/veracity/Veracity-Agent-Skills
+```
+
+---
+
 ## Skills at a glance
 
 | Skill | What it does |
@@ -272,16 +282,6 @@ Adds **Veracity login** to a web frontend — Sign In / Sign Out, an authenticat
 **Example prompt:**
 ```
 Build a full-stack Veracity login web app called "MyApp" from scratch.
-```
-
----
-
-## Installation
-
-With Node.js and `npx` available, run this command from the project where you want to use the skills:
-
-```bash
-npx skills add https://github.com/veracity/Veracity-Agent-Skills
 ```
 
 ---
