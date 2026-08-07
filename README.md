@@ -1,8 +1,8 @@
 # Veracity Agent Skills
 
-A collection of GitHub Copilot skills for scaffolding and configuring **Veracity** web applications across **.NET, NodeJS, and Python** backends plus a **React** frontend. Each skill is a reusable instruction set that Copilot follows to automate a specific part of your project setup — from creating an API backend to wiring up Veracity login in the browser.
+A collection of coding-agent skills for scaffolding and configuring **Veracity** web applications across **.NET, NodeJS, and Python** backends plus a **React** frontend. Each skill is a reusable instruction set that compatible coding agents — including GitHub Copilot, Claude Code, OpenAI Codex, and others — can follow to automate a specific part of your project setup, from creating an API backend to wiring up Veracity login in the browser.
 
-These skills live under `skills/` and are loaded automatically by GitHub Copilot when it detects a matching user intent. You do not need to reference them by name — just describe what you want to do and Copilot will apply the right skill.
+The skills live under `skills/`. Install them with the Skills CLI as shown below, or configure your coding-agent tool to discover or import this directory using its supported skills or custom-instructions mechanism. Discovery and activation behavior varies by tool; once configured, you can describe what you want to do or invoke a skill explicitly by name.
 
 ---
 
@@ -276,9 +276,21 @@ Build a full-stack Veracity login web app called "MyApp" from scratch.
 
 ---
 
+## Installation
+
+With Node.js and `npx` available, run this command from the project where you want to use the skills:
+
+```bash
+npx skills add https://github.com/veracity/Veracity-Agent-Skills
+```
+
+---
+
 ## Using the skills
 
-The skills are loaded automatically by GitHub Copilot when it detects a matching user intent — just describe what you want to build. To invoke one explicitly, name it:
+Use these skills with coding-agent tools that support reusable skills or instruction files, such as GitHub Copilot, Claude Code, OpenAI Codex, and similar agents. Follow your tool's documentation to make this repository's `skills/` directory available to the agent.
+
+After configuration, describe what you want to build and let the agent select a matching skill, or invoke one explicitly by name:
 
 ```
 Use the veracity-auth-net skill to add authentication to my project.
