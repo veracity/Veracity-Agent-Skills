@@ -1,8 +1,8 @@
-# AN Agent Skills
+# Veracity Agent Skills
 
 A collection of GitHub Copilot skills for scaffolding and configuring **Veracity** web applications across **.NET, NodeJS, and Python** backends plus a **React** frontend. Each skill is a reusable instruction set that Copilot follows to automate a specific part of your project setup — from creating an API backend to wiring up Veracity login in the browser.
 
-These skills live under `.github/skills/` and are loaded automatically by GitHub Copilot when it detects a matching user intent. You do not need to reference them by name — just describe what you want to do and Copilot will apply the right skill.
+These skills live under `skills/` and are loaded automatically by GitHub Copilot when it detects a matching user intent. You do not need to reference them by name — just describe what you want to do and Copilot will apply the right skill.
 
 ---
 
@@ -289,8 +289,8 @@ Use the veracity-auth-net skill to add authentication to my project.
 ## Repository Layout
 
 ```
-.github/skills/
-  README.md                       # This catalog
+README.md                         # This catalog
+skills/
   web-backend-net/                # Scaffold a plain .NET 10 Minimal API baseline (no auth)
   web-backend-node/               # Scaffold a plain Express 5 + TypeScript baseline (no auth)
   web-backend-python/             # Scaffold a plain FastAPI baseline (no auth)
