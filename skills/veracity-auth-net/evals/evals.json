@@ -1,0 +1,239 @@
+{
+  "skill_name": "veracity-auth-net",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I need to create a new Veracity web project with V4 API integration. The solution is called Veracity.MyApp",
+      "expected_output": "No baseline project exists, so the skill scaffolds one via the web-backend-net skill at src/Veracity.MyApp.Web/, then integrates Veracity OpenID Connect authentication with V4 endpoints.",
+      "files": [],
+      "assertions": [
+        "Skill recognizes no scaffold exists and scaffolds the baseline via the web-backend-net skill before adding auth",
+        "Project files exist under src/Veracity.MyApp.Web/ (path ends in .Web for OIDC)",
+        "VeracityAuthExtensions.cs created in Extensions/ folder",
+        "AuthEndpoints.cs created in Endpoints/ folder (OIDC BFF includes auth endpoints)",
+        "VeracityV4Endpoints.cs created in Endpoints/ folder",
+        ".csproj references Veracity.Common.OAuth.AspNetCore package",
+        ".csproj references Veracity.Core.Api.V4 package",
+        "appsettings.json contains the Veracity section and VeracityGraphBaseUrl key",
+        "Program.cs contains AddVeracityAuthentication and app.UseVeracity()",
+        "ClientSecret not hardcoded in appsettings.json or appsettings.Development.json (secrets belong in user-secrets or Key Vault)"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Scaffold a new web service project with both V3 and V4 Veracity API support. We're in a repo called 'Veracity.Platform.Services'",
+      "expected_output": "Baseline scaffolded via web-backend-net at src/Veracity.Platform.Services.Web/, then OIDC auth integrated with both V3 and V4 endpoint files, both NuGet packages, and both service registrations.",
+      "files": [],
+      "assertions": [
+        "Baseline scaffolded via web-backend-net before auth integration",
+        "Project files exist under src/Veracity.Platform.Services.Web/ (path ends in .Web for OIDC)",
+        ".csproj references both Veracity.Services.Api (V3) and Veracity.Core.Api.V4 (V4)",
+        "VeracityV3Endpoints.cs created in Endpoints/ folder",
+        "VeracityV4Endpoints.cs created in Endpoints/ folder",
+        "VeracityAuthExtensions.cs registers both V3 (AddVeracityServices) and V4 (AddVeracityGraphApi) services",
+        "appsettings.json contains both MyServicesApi and VeracityGraphBaseUrl keys",
+        "Program.cs contains UseVeracityTokenCacheRecovery() middleware call",
+        "VeracityAuthExtensions.cs sets cookie name to __Host-auth",
+        "appsettings.json contains Veracity B2C tenant config (TenantId, Policy, Instance, CallbackPath)"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Create a new Veracity project using only V3 APIs. My solution file is Veracity.Reporting.sln",
+      "expected_output": "Baseline scaffolded via web-backend-net at src/Veracity.Reporting.Web/, then OIDC auth integrated with only V3 endpoints, Veracity.Services.Api package, and AddVeracityServices registration.",
+      "files": [],
+      "assertions": [
+        "Project files exist under src/Veracity.Reporting.Web/ (path ends in .Web for OIDC)",
+        ".csproj references Veracity.Services.Api package",
+        ".csproj does NOT reference Veracity.Core.Api.V4",
+        "VeracityV3Endpoints.cs created in Endpoints/ folder",
+        "VeracityV4Endpoints.cs NOT created",
+        "appsettings.json contains MyServicesApi key (V3 URL)",
+        "VeracityAuthExtensions.cs registers V3 via AddVeracityServices",
+        "Program.cs contains UseVeracityTokenCacheRecovery() middleware call",
+        "Program.cs contains app.UseVeracity() call",
+        "SecurityHeadersMiddleware.cs present in Middleware/ folder (from the scaffolded baseline)"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "I have an existing .NET 10 web API project at src/Veracity.DataHub.Web/. I want to add Veracity authentication with V4 API support to it.",
+      "expected_output": "An existing baseline project is detected, so the skill does NOT re-scaffold. Veracity authentication is integrated: NuGet packages added to existing .csproj, VeracityAuthExtensions.cs added, auth woven into existing pipeline, V4 endpoints added, appsettings merged without overwriting existing config. User guided to use dotnet user-secrets for Client Secret.",
+      "files": [],
+      "assertions": [
+        "Skill detects the existing project and does NOT invoke web-backend-net / does NOT re-scaffold the baseline",
+        "VeracityAuthExtensions.cs created (integration mode)",
+        "VeracityV4Endpoints.cs created in Endpoints/ folder",
+        "NuGet packages for Veracity auth added to .csproj (Veracity.Common.OAuth.AspNetCore, Veracity.Core.Api.V4)",
+        "appsettings updated with Veracity section including VeracityGraphBaseUrl",
+        "ClientSecret not hardcoded in appsettings.json or appsettings.Development.json (secrets belong in user-secrets or Key Vault)",
+        "Existing project structure preserved (Program.cs not wholesale replaced)",
+        "VeracityAuthExtensions.cs contains AddVeracityAuthentication extension method",
+        "Program.cs includes UseVeracityTokenCacheRecovery() or instructions to add it"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Add Veracity auth to my existing .NET 10 app. I don't have a Veracity app registration yet.",
+      "expected_output": "Skill detects existing project mode (no re-scaffold), integrates Veracity auth, then directs user to Veracity developer documentation links (getting started, IDP, create an application) to register their app before providing credentials.",
+      "files": [],
+      "assertions": [
+        "Skill integrates Veracity auth (creates/modifies files) rather than just providing instructions",
+        "Skill does not re-scaffold an existing project",
+        "Output includes link to Veracity developer documentation (docs.veracity.com)",
+        "Output includes link to getting-started-as-a-developer page",
+        "Output includes link to create-an-application page",
+        "VeracityAuthExtensions.cs or equivalent auth file created"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "I need to create a stateless API with JWT Bearer authentication for Veracity. The solution is called Veracity.DataService",
+      "expected_output": "Baseline scaffolded via web-backend-net at src/Veracity.DataService.Api/, then JWT Bearer authentication integrated (JwtAuthExtensions.cs), no AuthEndpoints.cs (stateless), no Veracity V3/V4 endpoints, appsettings with Jwt:Authority and Jwt:Audience. User asked for API Client ID (audience). No client secret collected (JWT is stateless).",
+      "files": [],
+      "assertions": [
+        "Baseline scaffolded via web-backend-net before auth integration",
+        "Project files exist under src/Veracity.DataService.Api/ (path ends in .Api for JWT Bearer)",
+        "Extensions/JwtAuthExtensions.cs created",
+        "AuthEndpoints.cs NOT created (JWT Bearer is stateless - no cookie session auth endpoints)",
+        "VeracityV3Endpoints.cs and VeracityV4Endpoints.cs NOT created",
+        ".csproj references Microsoft.AspNetCore.Authentication.JwtBearer package",
+        "appsettings.Development.json contains Jwt:Authority and Jwt:Audience keys",
+        "User asked for API Client ID (Audience)"
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "Create a new Veracity API project with JWT authentication and Swagger OAuth2 enabled. Project name: Veracity.Analytics",
+      "expected_output": "Baseline scaffolded via web-backend-net at src/Veracity.Analytics.Api/, then JWT Bearer auth integrated with SwaggerOAuthExtensions.cs, Program.cs using AddSwaggerWithOAuth and UseSwaggerWithOAuth, appsettings with both Jwt and Swagger sections. User asked for API Client ID and Swagger Client ID. User guided to store Swagger:ClientSecret via dotnet user-secrets.",
+      "files": [],
+      "assertions": [
+        "Project files exist under src/Veracity.Analytics.Api/ (JWT = .Api suffix)",
+        "Extensions/JwtAuthExtensions.cs created",
+        "Extensions/SwaggerOAuthExtensions.cs created",
+        "Program.cs uses AddSwaggerWithOAuth and UseSwaggerWithOAuth methods (baseline AddSwaggerGen replaced)",
+        "appsettings.Development.json contains both Jwt section and Swagger section (with Instance/Domain/ClientId keys)",
+        "User guided to use dotnet user-secrets for Swagger:ClientSecret",
+        "JwtAuthExtensions.cs validates token lifetime (ValidateLifetime = true)",
+        "Swagger section includes B2C-specific keys (SignUpSignInPolicyId or Policy)"
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "I have an existing .NET 10 API project at src/Veracity.Fleet.Api/. Add JWT Bearer authentication with Veracity identity.",
+      "expected_output": "Existing project detected (no re-scaffold). JWT Bearer auth integrated: Microsoft.AspNetCore.Authentication.JwtBearer package added, JwtAuthExtensions.cs created in Extensions/, builder.Services.AddJwtBearerAuthentication() added to Program.cs, app.UseAuthentication() and app.UseAuthorization() added to the pipeline, Jwt section merged into appsettings. No AuthEndpoints or cookie auth added. User asked for API Client ID.",
+      "files": [],
+      "assertions": [
+        "Skill detects the existing project and does NOT re-scaffold the baseline via web-backend-net",
+        "Extensions/JwtAuthExtensions.cs created",
+        "Microsoft.AspNetCore.Authentication.JwtBearer package added to .csproj",
+        "Program.cs updated with builder.Services.AddJwtBearerAuthentication() call",
+        "Program.cs updated with app.UseAuthentication() and app.UseAuthorization() middleware",
+        "Jwt section added to appsettings (Authority and Audience keys)",
+        "AuthEndpoints.cs NOT created (JWT is stateless)",
+        "User asked for API Client ID"
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "Set up a new Veracity project. I want a bearer token API, not a web app with login.",
+      "expected_output": "Skill detects JWT Bearer strategy from the request, scaffolds the baseline via web-backend-net with the .Api suffix, then integrates JWT auth (JwtAuthExtensions.cs, no cookie auth, no OIDC). Asks user for API Client ID.",
+      "files": [],
+      "assertions": [
+        "Skill correctly identifies JWT Bearer strategy from 'bearer token API, not a web app' phrasing",
+        "Baseline scaffolded via web-backend-net with .Api suffix (not .Web)",
+        "JwtAuthExtensions.cs created",
+        "AuthEndpoints.cs NOT created (no cookie auth / login pages)",
+        "User asked for API Client ID (Audience)",
+        "No OIDC-specific packages (Veracity.Common.OAuth.AspNetCore) referenced in .csproj"
+      ]
+    },
+    {
+      "id": 10,
+      "prompt": "Create a new Veracity web project with OpenID Connect and V4 APIs. I want to be explicit about using OIDC, not JWT.",
+      "expected_output": "Skill identifies OpenID Connect, scaffolds the baseline via web-backend-net at src/{name}.Web/, then integrates VeracityAuthExtensions.cs, AuthEndpoints.cs, V4 endpoints, cookie-based session auth, Veracity.Common.OAuth.AspNetCore. Standard OIDC flow with user-secrets for ClientSecret.",
+      "files": [],
+      "assertions": [
+        "OIDC strategy used (not JWT), based on explicit request for OpenID Connect",
+        "Baseline scaffolded via web-backend-net with .Web suffix",
+        "VeracityAuthExtensions.cs created in Extensions/ folder",
+        "AuthEndpoints.cs created in Endpoints/ folder",
+        "VeracityV4Endpoints.cs created in Endpoints/ folder",
+        ".csproj references Veracity.Common.OAuth.AspNetCore (OIDC package, not just JwtBearer)"
+      ]
+    },
+    {
+      "id": 11,
+      "prompt": "I already scaffolded a clean .NET 10 minimal API at src/Acme.Portal.Web/ (it has API versioning, health checks, and security headers but no auth). Add Veracity OpenID Connect with V4.",
+      "expected_output": "The skill detects the existing baseline, does NOT re-scaffold or duplicate baseline capabilities, and only layers Veracity OIDC + V4 onto the existing project, weaving auth into the existing Program.cs and merging the Veracity config section.",
+      "files": [],
+      "assertions": [
+        "Skill detects the existing baseline and does NOT invoke web-backend-net again",
+        "Baseline capabilities (API versioning, health checks, SecurityHeadersMiddleware) are not duplicated or recreated",
+        "VeracityAuthExtensions.cs added to existing Extensions/ folder",
+        "AuthEndpoints.cs and VeracityV4Endpoints.cs added to Endpoints/",
+        "Existing Program.cs edited in place (UseVeracityTokenCacheRecovery, UseAuthentication, UseVeracity, UseAuthorization, RequireAuthorization added) rather than wholesale replaced",
+        "Veracity section merged into appsettings.json with VeracityGraphBaseUrl",
+        ".csproj references Veracity.Common.OAuth.AspNetCore and Veracity.Core.Api.V4"
+      ]
+    },
+    {
+      "id": 12,
+      "prompt": "I have an existing .NET 10 web app at src/Veracity.Portal.Web/ that uses MVC Controllers (it has a Controllers/ folder with [ApiController] classes and calls AddControllers()/MapControllers() in Program.cs). Add Veracity OpenID Connect with V4 API support.",
+      "expected_output": "The skill detects Controllers style (Phase 2.5) and integrates auth using Controller conventions: AuthController.cs and VeracityV4Controller.cs added to Controllers/ (NOT Minimal-API *Endpoints.cs files), auth woven into the existing Program.cs around MapControllers, V4 controller protected with [Authorize], appsettings merged. No re-scaffold.",
+      "files": [],
+      "assertions": [
+        "Skill detects the existing project uses MVC Controllers and does NOT re-scaffold via web-backend-net",
+        "Controllers/AuthController.cs created (NOT Endpoints/AuthEndpoints.cs)",
+        "Controllers/VeracityV4Controller.cs created (NOT Endpoints/VeracityV4Endpoints.cs)",
+        "VeracityV4Controller uses [Authorize] and a literal route 'api/v1/veracity/v4' (no Asp.Versioning.Mvc dependency added)",
+        "AuthController exposes /auth, /api/me, /auth/challenge, /signout with /auth and /auth/challenge marked [AllowAnonymous] and /api/me marked [Authorize]",
+        "Program.cs wires UseAuthentication/UseVeracity/UseAuthorization between UseRouting and MapControllers, plus UseVeracityTokenCacheRecovery before security headers",
+        "No MapAuthEndpoints(), MapV4Endpoints(), or apiGroup.RequireAuthorization() calls added (controller-based, not Minimal API)",
+        "VeracityAuthExtensions.cs and Veracity.Common.OAuth.AspNetCore + Veracity.Core.Api.V4 packages added (unchanged from Minimal API)",
+        "ClientSecret not hardcoded in appsettings (user-secrets / Key Vault)"
+      ]
+    },
+    {
+      "id": 13,
+      "prompt": "Add Veracity OpenID Connect (V3 and V4) to my existing .NET API. It's an older-style project that uses Startup.cs (ConfigureServices/Configure) with MVC Controllers.",
+      "expected_output": "The skill detects Controllers style with legacy Startup.cs hosting and integrates auth accordingly: AddVeracityAuthentication registered in Startup.ConfigureServices, auth middleware placed between UseRouting and UseEndpoints(MapControllers) in Startup.Configure, AuthController + VeracityV3Controller + VeracityV4Controller added, both V3/V4 packages and registrations.",
+      "files": [],
+      "assertions": [
+        "Skill detects Controllers style AND legacy Startup.cs hosting (no top-level Program.cs)",
+        "services.AddVeracityAuthentication(...) added in Startup.ConfigureServices",
+        "Auth middleware (UseAuthentication/UseVeracity/UseAuthorization) placed between UseRouting() and UseEndpoints(e => e.MapControllers()) in Startup.Configure",
+        "Controllers/AuthController.cs, Controllers/VeracityV3Controller.cs, and Controllers/VeracityV4Controller.cs created",
+        "VeracityAuthExtensions.cs registers both V3 (AddVeracityServices) and V4 (AddVeracityGraphApi) services",
+        "No Minimal-API endpoint files (*Endpoints.cs) or MapGroup/RequireAuthorization wiring added",
+        "appsettings contains both MyServicesApi and VeracityGraphBaseUrl keys"
+      ]
+    },
+    {
+      "id": 14,
+      "prompt": "I have an existing .NET 10 API at src/Veracity.Fleet.Api/ that uses MVC Controllers. Add JWT ****** with Veracity identity.",
+      "expected_output": "The skill detects Controllers style and integrates JWT: JwtAuthExtensions.cs added, AddJwtBearerAuthentication registered, UseAuthentication/UseAuthorization placed between UseRouting and MapControllers, and API controllers protected with [Authorize]. No controller or endpoint asset files are added (JWT is stateless).",
+      "files": [],
+      "assertions": [
+        "Skill detects the existing project uses MVC Controllers and does NOT re-scaffold",
+        "Extensions/JwtAuthExtensions.cs created and Microsoft.AspNetCore.Authentication.JwtBearer package added",
+        "Program.cs wires app.UseAuthentication() and app.UseAuthorization() between UseRouting and MapControllers",
+        "No AuthController/VeracityController or *Endpoints.cs asset files created (JWT is stateless, no endpoints in either style)",
+        "Protection applied via [Authorize] on API controllers (or a global fallback policy), NOT via apiGroup.RequireAuthorization()",
+        "User asked for API Client ID (Audience)"
+      ]
+    },
+    {
+      "id": 15,
+      "prompt": "I already scaffolded a clean .NET 10 minimal API at src/Acme.Portal.Web/ (health checks, security headers, MapGet endpoints, no controllers). Add Veracity OpenID Connect with V4.",
+      "expected_output": "The skill detects Minimal API style (no Controllers/ folder, top-level MapGet endpoints) and uses the Minimal-API endpoint assets and Program.cs wiring exactly as before — Controllers path is NOT triggered. Fresh/minimal-API projects remain unaffected by the MVC support.",
+      "files": [],
+      "assertions": [
+        "Skill detects Minimal API style and does NOT create controller asset files",
+        "Endpoints/AuthEndpoints.cs and Endpoints/VeracityV4Endpoints.cs created (Minimal-API endpoint files, not Controllers)",
+        "Program.cs uses MapAuthEndpoints() and apiGroup.MapV4Endpoints() with apiGroup.RequireAuthorization()",
+        "controllers reference files (controllers-oidc.md / controllers-jwt.md) are NOT followed for a Minimal API project"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,74 @@
+{
+  "skill_name": "web-backend-net",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Scaffold a new .NET 10 minimal API backend project. The solution is called Contoso.Reporting.",
+      "expected_output": "A complete .NET 10 Minimal API project scaffolded at src/Contoso.Reporting.Web/ with API versioning, Swagger, FluentValidation, health checks, CSP security-headers middleware, and a global error handler. No authentication.",
+      "files": [],
+      "assertions": [
+        "Project files created under src/Contoso.Reporting.Web/ (default .Web suffix when none specified)",
+        "Program.cs configures AddApiVersioning with UrlSegmentApiVersionReader and HeaderApiVersionReader",
+        "Program.cs registers AddSwaggerGen and uses Swagger UI in Development",
+        "Program.cs registers FluentValidation via AddValidatorsFromAssemblyContaining<Program>",
+        "Program.cs maps /health, /health/ready, and /health/live health check endpoints",
+        "Middleware/CSPOptions.cs and Middleware/SecurityHeadersMiddleware.cs created",
+        "Program.cs adds app.UseMiddleware<SecurityHeadersMiddleware>()",
+        "Program.cs contains a global UseExceptionHandler returning ProblemDetails",
+        ".csproj references Asp.Versioning.Http, FluentValidation, and Swashbuckle.AspNetCore",
+        "No authentication: no AddAuthentication, AddVeracity, AddJwtBearer, or .RequireAuthorization() in Program.cs",
+        "No Veracity packages referenced in .csproj (no Veracity.Common.OAuth.AspNetCore, no Veracity.Core.Api.V4)",
+        "appsettings.json contains the CSP section",
+        "launchSettings.json uses port 54438 (the skill's default) or a user-specified port — not a dynamically-generated dotnet template port",
+        ".csproj targets net10.0 with a UserSecretsId GUID",
+        "appsettings.json CSP section uses only generic 'self' sources (no Veracity CDN hostnames)"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Create a baseline .NET web API skeleton called PaymentsGateway with health checks and API versioning.",
+      "expected_output": "A project at src/PaymentsGateway.Web/ with the standard baseline (versioning, swagger, validation, health checks, security headers) and no auth.",
+      "files": [],
+      "assertions": [
+        "Project files created under src/PaymentsGateway.Web/",
+        "Program.cs maps /health, /health/ready, /health/live",
+        "Program.cs configures AddApiVersioning with default ApiVersion 1.0",
+        "Versioned API group MapGroup(\"/api/v{version:apiVersion}\") created without .RequireAuthorization()",
+        "Middleware/SecurityHeadersMiddleware.cs created and added to the pipeline",
+        "No authentication or Veracity packages referenced",
+        ".csproj targets net10.0 with a UserSecretsId"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "I have an existing .NET 10 API at src/Acme.Orders.Api/. Add the standard baseline (api versioning, swagger, health checks, CSP/security headers) without touching my existing endpoints.",
+      "expected_output": "Baseline capabilities integrated into the existing project: packages added only if missing, middleware and config merged, existing endpoints preserved. No authentication added.",
+      "files": [],
+      "assertions": [
+        "Integration mode used (existing Program.cs not wholesale replaced)",
+        "Middleware/SecurityHeadersMiddleware.cs and Middleware/CSPOptions.cs created",
+        "API versioning, Swagger, FluentValidation, and health checks added to Program.cs where missing",
+        "CSP section merged into appsettings without overwriting existing keys",
+        "Asp.Versioning / FluentValidation / Swashbuckle packages added only if not already present",
+        "No authentication, JWT bearer, or Veracity auth packages/services added",
+        "Existing endpoints preserved",
+        "Existing endpoints left in their original location (not moved/rewritten into the versioned apiGroup); a versioned apiGroup scaffold is still present for future endpoints",
+        "Baseline middleware inserted in the canonical order (UseExceptionHandler first, then Swagger in Development, UseHttpsRedirection, SecurityHeadersMiddleware, then health-check mappings)",
+        "Existing Properties/launchSettings.json not overwritten (only created if the project lacked one)",
+        "If the existing .csproj lacked a UserSecretsId, one is generated and added"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Scaffold a new .NET minimal API called Telemetry. Use HTTPS port 7200 for local development.",
+      "expected_output": "A project at src/Telemetry.Web/ with launchSettings.json using HTTPS port 7200 and the standard baseline.",
+      "files": [],
+      "assertions": [
+        "Project files created under src/Telemetry.Web/",
+        "Properties/launchSettings.json applicationUrl uses https://localhost:7200",
+        "Standard baseline present (versioning, swagger, health checks, security headers)",
+        "No authentication added"
+      ]
+    }
+  ]
+}

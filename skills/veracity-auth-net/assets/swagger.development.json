@@ -1,0 +1,9 @@
+{
+  "Swagger": {
+    "Instance": "https://login.veracity.com",
+    "Domain": "dnvglb2cprod.onmicrosoft.com",
+    "SignUpSignInPolicyId": "B2C_1A_Identity",
+    "ClientId": "<swagger-client-id>",
+    "ScopeName": "user_impersonation"
+  }
+}

@@ -1,0 +1,230 @@
+{
+  "skill_name": "veracity-auth-ui",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Create a full-stack web app with Veracity login from scratch. Use React + Vite for the frontend and a .NET backend. There's no existing backend yet.",
+      "expected_output": "Gathers requirements (name confirmed, defaults applied for design system=ShadCN and show-services=yes), detects no BFF, delegates to veracity-auth-net (OIDC) to create src/{Base}.Web, detects no frontend scaffold and delegates to web-base-ui to scaffold the welcome baseline into src/{Base}.Client, then applies the auth core, builds the login UI with ShadCN to the LoginExperience contract, merges the Vite proxy + HTTPS, and verifies the build.",
+      "files": [],
+      "assertions": [
+        "Project uses ShadCN design system (tailwindcss/Radix deps in package.json) with V4 data enabled (SHOW_V4 = true in App.tsx)",
+        "No existing BFF detected; veracity-auth-net skill is invoked with OpenID Connect strategy for src/{Base}.Web",
+        "No existing frontend scaffold detected; web-base-ui is invoked to scaffold the welcome baseline into src/{Base}.Client (passing project name, frontend directory, design system, tech stack)",
+        "Auth core (src/api/auth.ts, src/api/veracity.ts, src/hooks/useAuth.ts, src/App.tsx with useAuth hook) present in src/{Base}.Client",
+        "Login UI built with ShadCN (the design system web-base-ui set up) implementing the LoginExperience contract; auth wiring stays in the core, not the presentation",
+        "Backend URL detected from launchSettings.json https profile and used as the Vite proxy target",
+        "vite.config.ts proxy MERGED into the scaffold's plain config with routes /api, /auth/challenge, /auth, /signin-oidc, /signout (/auth/challenge before /auth, secure:false) plus basicSsl HTTPS; the react() plugin is preserved",
+        "@vitejs/plugin-basic-ssl added to package.json as a caret range",
+        "No {{projectName}} or {BACKEND_SERVER_URL} placeholders remain",
+        "Frontend build (tsc && vite build) is run to verify it compiles (hard gate; plain-template fallback if ShadCN setup fails)",
+        "README updated with veracity-auth-ui, web-base-ui, and veracity-auth-net in skills applied"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "I already have a React + Vite frontend at src/Veracity.Portal.Client and a .NET BFF at src/Veracity.Portal.Web with Veracity auth (/auth and /auth/challenge). Add Veracity login to the existing frontend.",
+      "expected_output": "Existing BFF reused (no new backend created); existing frontend scaffold reused (web-base-ui NOT invoked); auth integrated into the existing project with the proxy merged in.",
+      "files": [],
+      "assertions": [
+        "Existing BFF at src/Veracity.Portal.Web detected and reused — veracity-auth-net is NOT invoked",
+        "Existing frontend scaffold at src/Veracity.Portal.Client detected and reused — web-base-ui is NOT invoked (no re-scaffolding of package.json/tsconfig/design system)",
+        "The frontend's existing design system and tech stack are detected and the login UI is built to match",
+        "Backend URL auto-detected from src/Veracity.Portal.Web/Properties/launchSettings.json",
+        "Vite proxy + HTTPS merged into the existing vite.config.ts (no placeholder remaining); react() plugin preserved",
+        "Login-state UI wired (Sign in -> /auth/challenge, user info from /api/me, Sign out -> /signout)"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Build a React + Vite login web app. I don't want a .NET backend — my backend already runs at https://api.example.com and serves /auth and /auth/challenge. Just point the frontend at it.",
+      "expected_output": "No backend scaffolded; user-provided URL used directly as the Vite proxy target; no frontend exists so web-base-ui scaffolds the baseline, then auth is applied.",
+      "files": [],
+      "assertions": [
+        "No BFF created and veracity-auth-net is NOT invoked",
+        "User-provided URL https://api.example.com used as the Vite proxy target",
+        "launchSettings.json is NOT required for URL resolution in this path",
+        "No frontend scaffold present, so web-base-ui is invoked to scaffold the baseline before auth is applied",
+        "Auth applied: all five proxy routes merged, no {BACKEND_SERVER_URL} placeholder, Sign in -> /auth/challenge and Sign out -> /signout"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Set up a minimal Veracity login React app. It should check the user's sign-in status on load, show a Sign in button when signed out, and the user's name with a Sign out link when signed in.",
+      "expected_output": "Login-state behavior implemented exactly: /auth checked on load, /api/me fetched only when authenticated, Sign in/out via full navigation, 401 on /api/me scoped redirect, no global interceptor.",
+      "files": [],
+      "assertions": [
+        "GET /auth checked on app load via getAuthStatus()",
+        "GET /api/me fetched only after /auth reports authenticated (anonymous users not force-redirected)",
+        "Sign in performs full-page navigation to /auth/challenge?returnUrl= with a relative returnUrl",
+        "Sign out performs full-page navigation to /signout (not fetch)",
+        "401 from /api/me triggers a scoped redirect to /auth/challenge; there is NO global fetch interceptor",
+        "fetch calls use credentials: 'include'"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Create a Veracity login web app, but make login mandatory — if the user is not signed in, send them straight to login.",
+      "expected_output": "Forced-login variant applied: useAuth calls signIn() when /auth is false instead of rendering the Sign in button.",
+      "files": [],
+      "assertions": [
+        "Forced-login variant applied — when getAuthStatus() returns false, signIn() is called to redirect to /auth/challenge immediately",
+        "useAuth.ts implements auto-redirect (calls signIn() when not authenticated) instead of rendering a Sign in button",
+        "Rest of the flow (scaffold via web-base-ui if needed, Vite proxy, backend resolution) still produced"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Create a new Veracity login web app called \"MyPortal\". (Workspace is empty — no existing backend.)",
+      "expected_output": "Even though the user did not explicitly mention a .NET backend, the skill creates one by default: detects no BFF, delegates to veracity-auth-net (OIDC) to create src/MyPortal.Web, detects no frontend and delegates to web-base-ui to scaffold src/MyPortal.Client, then applies auth. The result is full-stack, never a frontend with no backend.",
+      "files": [],
+      "assertions": [
+        "No existing BFF detected; veracity-auth-net IS invoked by default with OpenID Connect strategy for src/MyPortal.Web (the skill does NOT skip backend creation just because the user didn't say '.NET')",
+        "No existing frontend detected; web-base-ui IS invoked to scaffold src/MyPortal.Client before auth is applied",
+        "Both src/MyPortal.Web/ (BFF with Veracity OIDC) and src/MyPortal.Client/ (frontend with proxy) exist — the skill created both without leaving the frontend backend-less",
+        "Backend URL detected from launchSettings.json and used as the Vite proxy target",
+        "Resulting app is full-stack: frontend + Veracity-integrated BFF both present"
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "I already have a .NET web API project at the repo root in ./MyApi (MyApi.csproj, Program.cs) with Veracity auth (/auth and /auth/challenge). Build the React + Vite login frontend for it.",
+      "expected_output": "Existing root-level BFF reused; no frontend yet so web-base-ui scaffolds it as a SIBLING of the API project at ./MyApi.Client (repo root), NOT under a new src/ folder and NOT nested inside ./MyApi; then auth is applied.",
+      "files": [],
+      "assertions": [
+        "Existing BFF detected at the repo root ./MyApi (search not limited to src/) and reused — veracity-auth-net is NOT invoked",
+        "web-base-ui is invoked with frontend directory ./MyApi.Client at the repo root, a sibling of ./MyApi (same level as the API project)",
+        "Frontend is NOT created at ./src/MyApi.Client and is NOT nested inside the API project at ./MyApi/src/MyApi.Client",
+        "Backend URL auto-detected from ./MyApi/Properties/launchSettings.json and used as the Vite proxy target",
+        "Login-state UI wired (Sign in -> /auth/challenge, user info from /api/me, Sign out -> /signout)"
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "Create a Veracity login web app from scratch, but build the UI with the design.md design system instead of ShadCN.",
+      "expected_output": "Phase 0 records design system = design.md and passes it to web-base-ui; the welcome baseline is scaffolded to the design.md spec, then the auth core is added unchanged and the login presentation is built to the same design.md spec while satisfying the UI contract.",
+      "files": [],
+      "assertions": [
+        "Design-system choice design.md is resolved and passed to web-base-ui (overrides the ShadCN default because the user asked)",
+        "Auth core (App.tsx shell, api/, hooks/useAuth) is added intact; only the login presentation layer is built to the design.md spec",
+        "LoginExperience contract satisfied: Sign in/out only via onSignIn/onSignOut, no direct /auth, /api/me, /signout, /auth/challenge calls in the presentation, and no global fetch interceptor",
+        "Build (tsc && vite build) verified; plain-template fallback used only if the design.md UI cannot be made to build"
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "Create a new Veracity login web app from scratch. It's a legacy-mode application, so use the V3 services API. No existing backend.",
+      "expected_output": "When creating the new BFF, the chosen Veracity Service API version (V3) is passed to veracity-auth-net; the frontend lists the user's V3 services and does not show V4 applications.",
+      "files": [],
+      "assertions": [
+        "BFF .csproj references Veracity.Services.Api (V3) and does NOT reference Veracity.Core.Api.V4; BFF Program.cs has MapV3Endpoints but not MapV4Endpoints",
+        "After generation, BFF_V3_ENABLED is true and BFF_V4_ENABLED is false (re-checked by grepping the generated BFF source)",
+        "Final flags: __V3_ENABLED__ replaced with true, __V4_ENABLED__ with false in App.tsx",
+        "VeracityData lists /api/v1/veracity/v3/services and does not call /api/v1/veracity/v4/me/applications"
+      ]
+    },
+    {
+      "id": 10,
+      "prompt": "Build a Veracity login web app against my existing BFF at src/Acme.Web (it exposes both V3 and V4 Veracity endpoints), but I do NOT want to show the user's services or applications in the UI.",
+      "expected_output": "The BFF exposes V3 and V4, but the user opted out of showing Veracity data, so both final display flags are false and VeracityData renders nothing — capability AND preference are both required.",
+      "files": [],
+      "assertions": [
+        "Existing BFF at src/Acme.Web reused; BFF_V3_ENABLED and BFF_V4_ENABLED both detected as true",
+        "Phase 0 show-services preference is no (USER_WANTS_VERACITY_DATA = false)",
+        "Final flags V3_ENABLED and V4_ENABLED are both false (capability AND preference), so __V3_ENABLED__ and __V4_ENABLED__ are both replaced with false",
+        "VeracityData renders nothing and the app never calls the V3 or V4 endpoints despite the BFF exposing them"
+      ]
+    },
+    {
+      "id": 11,
+      "prompt": "Build a Veracity login web app for my existing React project that already uses Material UI (@mui/material is in package.json) and a .NET BFF with Veracity auth.",
+      "expected_output": "The existing frontend scaffold is reused (web-base-ui NOT invoked); its configured design system (MUI) is detected and the login UI is built with MUI components instead of ShadCN, while keeping the auth core and contract unchanged.",
+      "files": [],
+      "assertions": [
+        "Existing frontend scaffold detected and reused — web-base-ui is NOT invoked",
+        "The frontend's configured design system @mui/material is detected and used; the skill does NOT default to ShadCN",
+        "Login presentation is built with MUI components and satisfies the LoginExperience contract (onSignIn/onSignOut only, no direct auth-endpoint calls, no global interceptor)",
+        "Auth core (App.tsx, api/, hooks/) added intact; existing BFF reused"
+      ]
+    },
+    {
+      "id": 12,
+      "prompt": "Create a Veracity login web app, but I don't want React — build it as vanilla JS/HTML with esbuild as the bundler.",
+      "expected_output": "The user explicitly chose a non-default stack, so web-base-ui scaffolds the vanilla/esbuild baseline and this skill reimplements the same auth-core contract in vanilla JS/HTML, keeping the four-endpoint login behavior and the dev-server proxy over HTTPS.",
+      "files": [],
+      "assertions": [
+        "Tech stack vanilla JS/HTML with esbuild is resolved and passed to web-base-ui (deviating from the React + Vite + TypeScript default because the user asked)",
+        "The same auth-core contract is reimplemented in the chosen stack: /auth checked on load, /api/me only when authenticated, Sign in via full nav to /auth/challenge?returnUrl=, Sign out via full nav to /signout, scoped 401 re-auth, credentials: 'include', no global fetch interceptor",
+        "An equivalent dev-server proxy is configured (routes /api, /auth/challenge before /auth, /signin-oidc, /signout to the backend URL over HTTPS, secure:false) since Vite is not used",
+        "If the vanilla/esbuild build cannot be made to pass, the skill (via web-base-ui) falls back to the default React + Vite + TypeScript stack and informs the user"
+      ]
+    },
+    {
+      "id": 13,
+      "prompt": "Add Veracity sign in and sign out to my existing React + Vite app. It already has its own pages and a .NET BFF with /auth and /auth/challenge.",
+      "expected_output": "The existing frontend and BFF are both reused; the skill integrates auth WITHOUT re-scaffolding the project — it adds the auth core, merges the proxy + HTTPS into the existing vite.config.ts, and builds the login UI with the project's existing design system, preserving existing pages.",
+      "files": [],
+      "assertions": [
+        "Existing frontend scaffold detected and reused — web-base-ui is NOT invoked and package.json/tsconfig are NOT regenerated",
+        "Existing BFF detected and reused — veracity-auth-net is NOT invoked",
+        "Auth core files (api/auth.ts, api/veracity.ts, hooks/useAuth.ts) added; existing pages and components preserved",
+        "Proxy routes + basicSsl HTTPS merged into the existing vite.config.ts without removing the react plugin or existing aliases; @vitejs/plugin-basic-ssl added to package.json",
+        "Login UI built with the project's existing design system; build verified"
+      ]
+    },
+    {
+      "id": 14,
+      "prompt": "I have an existing .NET MVC Controllers API at src/Veracity.Portal.Web that already has Veracity OpenID Connect auth (an AuthController and a VeracityV4Controller). Build the React + Vite login frontend for it and show my applications.",
+      "expected_output": "The existing MVC Controllers BFF is detected and reused (veracity-auth-net NOT invoked). Detection works despite the controller style: the BFF is recognized via /auth/challenge in AuthController, and V4 capability is recognized via the 'veracity/v4' route on VeracityV4Controller. The frontend is generated with V4 enabled and is byte-for-byte identical to the Minimal-API case (same endpoint contract).",
+      "files": [],
+      "assertions": [
+        "Existing MVC Controllers BFF at src/Veracity.Portal.Web detected and reused — veracity-auth-net is NOT invoked",
+        "BFF detection succeeds on a Controllers project: /auth/challenge matched in AuthController ([HttpGet(\"/auth/challenge\")]), not only Minimal-API MapGet",
+        "BFF_V4_ENABLED detected as true by grepping 'veracity/v4' (matches the [Route(\"api/v1/veracity/v4\")] attribute / VeracityV4Controller), even though the literal '/veracity/v4/me/applications' string and 'MapV4Endpoints' are absent",
+        "__V4_ENABLED__ replaced with true; VeracityData lists /api/v1/veracity/v4/me/applications",
+        "Frontend assets (api/, hooks/useAuth, App.tsx, vite proxy routes) are identical to the Minimal-API case — the Controllers style does not change the frontend",
+        "Backend URL auto-detected from src/Veracity.Portal.Web/Properties/launchSettings.json"
+      ]
+    },
+    {
+      "id": 15,
+      "prompt": "Create a full-stack Veracity login web app from scratch with a Node (Express) backend and a React + Vite frontend. No existing backend.",
+      "expected_output": "Backend stack resolved to Node (user asked for Express). No BFF detected, so veracity-auth-node is invoked (OIDC) to create the Express BFF (no .sln/.csproj created); web-base-ui scaffolds the frontend as a kebab-case sibling; auth core applied; backend URL taken from the Node BFF port; xfwd applied because the Node BFF runs over HTTP.",
+      "files": [],
+      "assertions": [
+        "Backend stack is Node; veracity-auth-node is invoked with OpenID Connect and REDIRECT_BASE_URL=https://localhost:5173, NOT veracity-auth-net",
+        "NO .sln or .csproj or launchSettings.json is created (Node backend uses package.json)",
+        "Base name is kebab-case and the frontend scaffold is a sibling {base}-client/ (not {Base}.Client), scaffolded via web-base-ui",
+        "Backend URL is resolved from the Node BFF port (default http://localhost:54438), NOT from launchSettings.json",
+        "Because the Node BFF is HTTP behind the HTTPS dev proxy, xfwd:true is added to the proxy routes (and app.set('trust proxy', 1) noted for the BFF)",
+        "Auth core applied, all five proxy routes merged, no {BACKEND_SERVER_URL} placeholder remains",
+        "README skills-applied lists veracity-auth-ui, web-base-ui, and veracity-auth-node"
+      ]
+    },
+    {
+      "id": 16,
+      "prompt": "Build a Veracity login web app with a Python FastAPI backend and a React frontend, starting from an empty workspace.",
+      "expected_output": "Backend stack resolved to Python. No BFF detected, so veracity-auth-python is invoked (OIDC) to create the FastAPI BFF (no .sln/.csproj); web-base-ui scaffolds the kebab-case frontend sibling; backend URL from the Python HTTPS dev port; auth applied.",
+      "files": [],
+      "assertions": [
+        "Backend stack is Python; veracity-auth-python is invoked with OpenID Connect and REDIRECT_BASE_URL=https://localhost:5173, NOT veracity-auth-net or veracity-auth-node",
+        "NO .sln, .csproj, or launchSettings.json is created (Python backend uses pyproject.toml)",
+        "Base name is kebab-case and the frontend is a sibling {base}-client/ scaffolded via web-base-ui",
+        "Backend URL resolved from the Python BFF HTTPS dev port (default https://localhost:54438), NOT from launchSettings.json",
+        "Auth core applied, all five proxy routes merged, no {BACKEND_SERVER_URL} placeholder remains",
+        "README skills-applied lists veracity-auth-ui, web-base-ui, and veracity-auth-python"
+      ]
+    },
+    {
+      "id": 17,
+      "prompt": "I already have a Node Express BFF at src/portal-api with Veracity auth (/auth and /auth/challenge). Build the React + Vite login frontend for it.",
+      "expected_output": "Existing Node BFF detected and reused (no backend skill invoked); frontend scaffolded as a kebab-case sibling; backend URL from the Node BFF port; auth applied.",
+      "files": [],
+      "assertions": [
+        "Existing Node BFF at src/portal-api detected via /auth/challenge in .ts/.js with Express markers and reused — veracity-auth-net/node/python are NOT invoked",
+        "Backend stack detected as Node; frontend directory is the sibling src/portal-client/ (kebab-case, not .Client)",
+        "Backend URL resolved from the Node BFF port, NOT launchSettings.json",
+        "Auth core applied and login-state UI wired (Sign in -> /auth/challenge, /api/me, Sign out -> /signout)"
+      ]
+    }
+  ]
+}

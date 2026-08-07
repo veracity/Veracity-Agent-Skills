@@ -1,0 +1,70 @@
+{
+  "skill_name": "web-backend-python",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Scaffold a new FastAPI backend project. The project is called Contoso Reporting.",
+      "expected_output": "A complete FastAPI project scaffolded under src/contoso-reporting-api/ with health checks, a versioned /api/v1 router, security-headers/CSP middleware, ProblemDetails error handling, pydantic-settings config, and an HTTPS-first dev server. No authentication.",
+      "files": [],
+      "assertions": [
+        "FastAPI chosen as the framework",
+        "Explicit project name Contoso Reporting normalized to Python project slug contoso-reporting",
+        "Project files created under src/contoso-reporting-api/ (default -api suffix when none specified)",
+        "pyproject.toml [project].name set to contoso-reporting-api",
+        "Import package remains app unless explicitly renamed",
+        "app/main.py create_app adds SecurityHeadersMiddleware, ProblemDetails handlers, health router, and the versioned /api/v1 router",
+        "app/health.py maps /health, /health/ready, /health/live (anonymous)",
+        "app/api/v1.py exposes an APIRouter with prefix /api/v1",
+        "app/security_headers.py adds CSP, HSTS, X-Frame-Options, X-Content-Type-Options",
+        "app/problem_details.py returns application/problem+json for errors",
+        "pyproject.toml depends on fastapi, uvicorn, pydantic, pydantic-settings (dev: pytest, httpx, ruff, mypy)",
+        "No authentication: no authlib, msal, pyjwt, session middleware, or login endpoints",
+        "No Veracity packages or Veracity-specific config referenced",
+        "app/settings.py CSP is generic 'self'-only with no external hostnames",
+        "HTTPS-first dev server (app/dev_server.py, web-dev script) reads HTTPS cert/key from settings"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Create a baseline Python web API skeleton called PaymentsGateway with health checks and a versioned API group.",
+      "expected_output": "A FastAPI project at src/paymentsgateway-api/ with the standard baseline (health checks, versioned /api/v1 group, security headers, ProblemDetails) and no auth.",
+      "files": [],
+      "assertions": [
+        "Project files created under src/paymentsgateway-api/",
+        "app/health.py maps /health, /health/ready, /health/live",
+        "Versioned APIRouter with prefix /api/v1 created without any auth dependency",
+        "app/security_headers.py created and added to the app in app/main.py",
+        "No authentication or Veracity packages referenced",
+        "pyproject.toml targets requires-python >=3.10 with a hatchling build backend"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "I have an existing FastAPI app under src/acme-orders-api/. Add the standard baseline (health checks, versioned /api/v1 group, CSP/security headers, ProblemDetails) without touching my existing endpoints.",
+      "expected_output": "Baseline capabilities integrated into the existing project: dependencies added only if missing, middleware and config merged, existing endpoints preserved. No authentication added.",
+      "files": [],
+      "assertions": [
+        "Integration mode used (existing app/main.py not wholesale replaced)",
+        "app/security_headers.py and app/problem_details.py added",
+        "Health endpoints and a versioned /api/v1 router added where missing",
+        "Security-headers middleware and ProblemDetails handlers wired into the existing app factory",
+        "Only missing dependencies added (fastapi already present, not re-added)",
+        "No authentication, JWT, or Veracity auth packages added",
+        "Existing endpoints preserved and left in their original location",
+        "Existing .env / launch configuration not overwritten"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Scaffold a new FastAPI backend called Telemetry. Use HTTPS port 7200 for local development.",
+      "expected_output": "A FastAPI project at src/telemetry-api/ whose dev server / .env use HTTPS port 7200 and the standard baseline.",
+      "files": [],
+      "assertions": [
+        "Project files created under src/telemetry-api/",
+        ".env APP_PORT set to 7200 and used by app/dev_server.py",
+        "Standard baseline present (health checks, versioned group, security headers, ProblemDetails)",
+        "No authentication added"
+      ]
+    }
+  ]
+}

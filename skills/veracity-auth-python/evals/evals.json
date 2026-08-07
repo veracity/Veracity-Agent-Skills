@@ -1,0 +1,195 @@
+{
+  "skill_name": "veracity-auth-python",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I'm a Python developer. Create a FastAPI backend named Veracity Reporting that lets users log in with Veracity. Default OIDC.",
+      "expected_output": "FastAPI BFF scaffolded under src/veracity-reporting-web/ with Authlib OIDC against Veracity B2C, signed-cookie session, /auth, /auth/challenge, /auth/callback, /api/me, /signout endpoints, pydantic-settings config, security headers, health checks.",
+      "files": [],
+      "assertions": [
+        "FastAPI chosen as the framework",
+        "Baseline FastAPI project scaffolded via web-backend-python (health checks, security-headers/CSP, versioned /api/v1, ProblemDetails) before Veracity auth is layered on",
+        "Explicit project name Veracity Reporting normalized to Python project slug veracity-reporting",
+        "Project files created under src/veracity-reporting-web/ (OIDC = -web suffix)",
+        "pyproject.toml [project].name set to veracity-reporting-web",
+        "Import package remains app unless explicitly renamed",
+        "Strategy determined as OpenID Connect (BFF)",
+        "Authlib used for the OIDC login flow (authorize_redirect / authorize_access_token)",
+        "app/auth/oidc.py created with /auth, /auth/challenge, /auth/callback, /api/me, /signout",
+        "Starlette SessionMiddleware configured with __Host- prefixed cookie when COOKIE_SECURE",
+        "Local development starts over HTTPS (for example via app/dev_server.py or uv run veracity-dev) with cert/key configuration",
+        "/api/me returns 401 (not a redirect) when unauthenticated",
+        "Production B2C authority used by default (login.veracity.com/dnvglb2cprod.onmicrosoft.com/B2C_1A_Identity/v2.0)",
+        "User guided to set CLIENT_SECRET in .env, not asked to paste it in chat",
+        "A strong SESSION_SECRET is generated into the local .env by the skill",
+        "Local HTTPS cert and key files are generated in the project and wired into .env",
+        "User asked for the Client ID (GUID, non-secret)"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Set up a stateless Python API named Veracity Data Service that validates Veracity bearer tokens. No web login.",
+      "expected_output": "FastAPI stateless API scaffolded under src/veracity-data-service-api/ with PyJWT validation against the Veracity B2C JWKS endpoint; no session, no login endpoints.",
+      "files": [],
+      "assertions": [
+        "Strategy determined as JWT Bearer (stateless)",
+        "Explicit project name Veracity Data Service normalized to Python project slug veracity-data-service",
+        "Baseline FastAPI project scaffolded via web-backend-python before Veracity JWT auth is layered on",
+        "Project files created under src/veracity-data-service-api/ (JWT Bearer = -api suffix)",
+        "pyproject.toml [project].name set to veracity-data-service-api",
+        "Import package remains app unless explicitly renamed",
+        "PyJWT + PyJWKClient used to validate signature, issuer, audience, expiry",
+        "app/auth/jwt.py created with a require_user FastAPI dependency",
+        "60-second leeway/clock skew configured",
+        "No OIDC login endpoints or session middleware created",
+        "appsettings/.env uses JWT_AUDIENCE (the API Client ID) and the Production authority",
+        "Protected endpoint returns 401 (with WWW-Authenticate: Bearer) for missing/invalid tokens",
+        "No CLIENT_SECRET collected (JWT is stateless)"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "What Python framework and libraries should I use to integrate with Veracity OIDC/JWT?",
+      "expected_output": "Recommends FastAPI with Authlib (OIDC), PyJWT/PyJWKClient (JWT validation), MSAL (token acquisition), httpx (API calls), pydantic-settings (config).",
+      "files": [],
+      "assertions": [
+        "FastAPI recommended as the primary framework",
+        "Authlib recommended for the OIDC/BFF login flow",
+        "PyJWT (or fastapi-azure-auth) recommended for JWT validation",
+        "MSAL for Python recommended for on-behalf-of token acquisition",
+        "httpx recommended for calling the Veracity API",
+        "pydantic-settings recommended for configuration and .env-based secrets"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Add a Veracity API client to my Python app so I can call the V4 graph API as the logged-in user.",
+      "expected_output": "openapi-python-client generation guidance plus an httpx auth layer that injects Bearer (MSAL OBO, user_impersonation scope) and Ocp-Apim-Subscription-Key.",
+      "files": [],
+      "assertions": [
+        "openapi-python-client suggested to generate the typed client from the Veracity OpenAPI spec",
+        "httpx auth layer injects Authorization: Bearer and Ocp-Apim-Subscription-Key headers",
+        "MSAL on-behalf-of used to acquire the downstream token with the user_impersonation scope",
+        "V4 base URL https://api.veracity.com/veracity/graph/v4 used by default",
+        "User guided to set SUBSCRIPTION_KEY via .env / Key Vault, not in chat"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "I want the Swagger UI of my Veracity Python API to let developers log in and test endpoints.",
+      "expected_output": "JWT Bearer plus Swagger OAuth2 (Authorization Code + PKCE) via fastapi-azure-auth pointing at the Veracity B2C authorize/token endpoints.",
+      "files": [],
+      "assertions": [
+        "JWT Bearer strategy selected",
+        "Swagger OAuth2 (Authorization Code + PKCE) configured, e.g. via fastapi-azure-auth",
+        "Swagger Authorize flow points at the Veracity B2C authorize and token endpoints",
+        "A separate Swagger Client ID collected (distinct from the API audience)",
+        "Any Swagger client secret set via .env, not asked for in chat",
+        "Reply URL /docs/oauth2-redirect noted for the Swagger app registration"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Create a Python Veracity web app with login. We're in a repo called Veracity.Platform.Services and I did not provide a project name.",
+      "expected_output": "FastAPI OIDC/BFF scaffolded under src/veracity-platform-services-web/ after deriving the base project name from repository context.",
+      "files": [],
+      "assertions": [
+        "Base project name derived from repository context when no explicit name is provided",
+        "Baseline FastAPI project scaffolded via web-backend-python before Veracity auth is layered on",
+        "Repository name Veracity.Platform.Services normalized to Python project slug veracity-platform-services",
+        "Project files created under src/veracity-platform-services-web/",
+        "pyproject.toml [project].name set to veracity-platform-services-web",
+        "Strategy determined as OpenID Connect (BFF) from web app/login wording"
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "I have an existing Flask app and want to add Veracity login (sign in / out and show the current user).",
+      "expected_output": "Veracity OIDC BFF integrated into the existing Flask app via the veracity_flask adapter over veracity_core — Authlib flask_client blueprint with /auth, /auth/challenge, /auth/callback, /api/me, /signout, a secure Flask session, and security headers. No new FastAPI project is scaffolded.",
+      "files": [],
+      "assertions": [
+        "Existing project detected as Flask (not scaffolded as a new FastAPI project)",
+        "Strategy determined as OpenID Connect (BFF) from web app/login wording",
+        "veracity_core and veracity_flask packages copied into the existing project",
+        "Authlib flask_client used via init_veracity_oidc(app) to register the Veracity OIDC client",
+        "Blueprint exposes /auth, /auth/challenge, /auth/callback, /api/me, /signout",
+        "Flask session cookie configured secure (SESSION_COOKIE_SECURE/HTTPONLY/SAMESITE=Lax) and signed with SECRET_KEY",
+        "/api/me returns 401 (not a redirect) when unauthenticated",
+        "register_security_headers(app) adds the Veracity CSP/HSTS headers",
+        "Flask-Session + Redis noted for multi-instance deployments",
+        "User guided to set CLIENT_SECRET in .env, not asked to paste it in chat",
+        "Only missing dependencies (authlib, msal, pyjwt[crypto], httpx, pydantic-settings) added; Flask itself not re-added"
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "My existing Django REST Framework API needs to validate Veracity bearer tokens. It's a stateless API, no login page.",
+      "expected_output": "VeracityJWTAuthentication (a DRF authentication class over veracity_core) wired into DEFAULT_AUTHENTICATION_CLASSES with IsAuthenticated; PyJWT validation against the Veracity B2C JWKS; no session, no OIDC endpoints. Integrated into the existing Django project, not scaffolded fresh.",
+      "files": [],
+      "assertions": [
+        "Existing project detected as Django / Django REST Framework",
+        "Strategy determined as JWT Bearer (stateless API)",
+        "veracity_core and veracity_django packages copied into the existing project",
+        "VeracityJWTAuthentication added to REST_FRAMEWORK DEFAULT_AUTHENTICATION_CLASSES",
+        "PyJWT + PyJWKClient validate signature, issuer, audience, expiry with 60-second leeway",
+        "Missing token returns 401 with WWW-Authenticate: Bearer (not 403)",
+        "Invalid/expired/wrong-audience/wrong-issuer tokens rejected with 401",
+        "request.user exposes the validated principal without creating a Django ORM user",
+        "No OIDC login endpoints or SessionMiddleware added for the stateless API",
+        "JWT_AUDIENCE (the API app registration Client ID) used with the Production authority",
+        "No CLIENT_SECRET collected (JWT is stateless)"
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "Add Veracity bearer-token auth to my existing Flask API. We don't use DRF or any web login.",
+      "expected_output": "Stateless JWT validation added to the existing Flask app via the veracity_flask @require_user decorator over veracity_core — no session, no OIDC endpoints.",
+      "files": [],
+      "assertions": [
+        "Existing project detected as Flask",
+        "Strategy determined as JWT Bearer (stateless API)",
+        "veracity_core and veracity_flask packages copied into the existing project",
+        "@require_user decorator from veracity_flask.jwt applied to protected views",
+        "Validation delegates to veracity_core (PyJWT signature/issuer/audience/expiry, 60s leeway)",
+        "Missing/invalid token returns 401 with WWW-Authenticate: Bearer",
+        "No OIDC blueprint or Flask session configured for the stateless API",
+        "JWT_AUDIENCE set to the API app registration Client ID"
+      ]
+    },
+    {
+      "id": 10,
+      "prompt": "Add Veracity login to my project. I'm in a repo that has manage.py and a settings.py with INSTALLED_APPS.",
+      "expected_output": "Framework auto-detected as Django from manage.py/INSTALLED_APPS; Veracity OIDC BFF integrated via the veracity_django adapter (Authlib django_client views + urls, Django server-side session), not scaffolded as a new FastAPI project.",
+      "files": [],
+      "assertions": [
+        "Framework auto-detected as Django from manage.py and settings.py INSTALLED_APPS markers",
+        "No new FastAPI project scaffolded; integration into the existing Django project",
+        "Strategy determined as OpenID Connect (BFF) from login wording",
+        "veracity_django added to INSTALLED_APPS and its urls included in the root urlconf",
+        "Authlib django_client used for the OIDC views (/auth, /auth/challenge, /auth/callback, /api/me, /signout)",
+        "Django's server-side session used for BFF state; SessionMiddleware present",
+        "VeracitySecurityHeadersMiddleware added to MIDDLEWARE",
+        "/api/me returns 401 (not a redirect) when unauthenticated",
+        "User guided to set CLIENT_SECRET in .env, not asked to paste it in chat"
+      ]
+    },
+    {
+      "id": 11,
+      "prompt": "Build the FastAPI Veracity BFF that backs the React frontend generated by veracity-auth-ui, including the calls that list my Veracity services and applications.",
+      "expected_output": "FastAPI OIDC BFF whose routes match the veracity-auth-ui SPA exactly: /auth, /auth/challenge, /auth/callback (callback), /signout, /api/me, plus the Veracity API proxy at /api/v1/veracity/v3/services and /api/v1/veracity/v4/me/applications. REDIRECT_URI is set to the Vite proxy origin so B2C returns to the SPA origin.",
+      "files": [],
+      "assertions": [
+        "Baseline FastAPI project scaffolded via web-backend-python (health, security headers, versioned /api/v1, ProblemDetails) before the Veracity BFF is layered on",
+        "OIDC callback route is /auth/callback (the Authlib default, forwarded by the SPA's /auth dev-proxy rule), not /signin-oidc",
+        "Sign-out route is lowercase /signout (FastAPI is case-sensitive), not /signOut",
+        "Veracity API proxy mounted at /api/v1/veracity/v3/services and /api/v1/veracity/v4/me/applications, matching the SPA's src/api/veracity.ts paths",
+        "Proxy routes call the Veracity Platform API as the signed-in user via MSAL on-behalf-of and attach the Ocp-Apim-Subscription-Key",
+        "Proxy routes return 401 when the session has no user or no stored access token so the SPA can silently re-challenge",
+        "The OIDC callback stores the user's access token in the session for the OBO exchange",
+        "REDIRECT_URI setting added and set to the Vite proxy origin (e.g. https://localhost:5173/auth/callback) so B2C returns to the SPA origin holding the session cookie",
+        "That exact REDIRECT_URI is noted as a reply URL to register on the Veracity app registration",
+        "No changes required to the veracity-auth-ui frontend to talk to this BFF"
+      ]
+    }
+  ]
+}

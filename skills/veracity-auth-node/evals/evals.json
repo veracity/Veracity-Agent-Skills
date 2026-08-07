@@ -1,0 +1,184 @@
+{
+  "skill_name": "veracity-auth-node",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Create a NodeJS Express backend with Veracity login. I want the default OpenID Connect (BFF) strategy.",
+      "expected_output": "Baseline scaffolded via web-backend-node (no project existed), then OIDC BFF auth layered on: @azure/msal-node confidential client, express-session with __Host- cookie, auth routes, env vars added, secrets guided into .env.local.",
+      "files": [],
+      "assertions": [
+        "Strategy determined as OpenID Connect (from user request)",
+        "No existing project detected -> baseline scaffolded first (web-backend-node conventions: helmet, health endpoints, /api/v1 anchor, zod env config)",
+        "package.json includes express, @azure/msal-node, express-session, helmet, zod",
+        "src/auth/msalClient.ts created (ConfidentialClientApplication)",
+        "src/auth/authRoutes.ts created with /auth, /auth/challenge, /auth/callback, /api/me, /signOut",
+        "Session cookie name uses __Host- prefix (e.g. __Host-veracity.session) with secure + path=/",
+        "Unauthenticated /api/* returns 401 instead of redirecting (authMiddleware)",
+        "env files contain B2C Production values (B2C_INSTANCE, B2C_DOMAIN, B2C_TENANT_ID, CLIENT_ID)",
+        "User guided to set CLIENT_SECRET and SESSION_SECRET in .env.local (not asked to paste in chat)",
+        ".gitignore ignores .env.local"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Set up a stateless NodeJS API that validates Veracity JWT bearer tokens.",
+      "expected_output": "Express + TypeScript project with jose-based JWT Bearer validation middleware, no session, env with JWT_AUTHORITY and JWT_AUDIENCE.",
+      "files": [],
+      "assertions": [
+        "Strategy determined as JWT Bearer (from 'stateless' and 'bearer tokens' phrasing)",
+        "package.json includes jose",
+        "src/auth/jwtMiddleware.ts created (createRemoteJWKSet + jwtVerify)",
+        "clockTolerance set to 60 seconds (matches .NET 1-minute ClockSkew)",
+        "No express-session, no authRoutes (JWT is stateless)",
+        "env contains JWT_AUTHORITY and JWT_AUDIENCE",
+        "User asked for the API Client ID (Audience)",
+        "No CLIENT_SECRET collected (JWT only validates tokens)"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "I want Veracity auth in my Node app but I don't have an app registration yet.",
+      "expected_output": "Skill scaffolds auth files and directs the user to Veracity developer docs to register their application.",
+      "files": [],
+      "assertions": [
+        "Output includes links to docs.veracity.com developer documentation",
+        "Output includes getting-started-as-a-developer link",
+        "Output includes create-an-application link",
+        "Auth files still scaffolded (skill does not block on missing registration)",
+        "CLIENT_ID left as a placeholder for the user to fill in",
+        "User told which values they will need (Client ID, Client Secret)"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Add Veracity OIDC login to my Node app and also let it call the Veracity API V3 for services and notifications.",
+      "expected_output": "OIDC BFF auth plus Veracity API V3 typed client (openapi-typescript + openapi-fetch) and BFF proxy endpoints.",
+      "files": [],
+      "assertions": [
+        "OIDC strategy selected",
+        "openapi-typescript and openapi-fetch added; veracity:gen script present",
+        "src/veracity/veracityApiMiddleware.ts created with Bearer + Ocp-Apim-Subscription-Key injection",
+        "src/veracity/apiV3Routes.ts created with /api/services and /api/notifications/count",
+        "Downstream token obtained via MSAL acquireTokenSilent using VERACITY_API_SCOPE",
+        "env contains VERACITY_API_V3_BASE_URL and VERACITY_API_SCOPE (Production values)",
+        "User guided to set VERACITY_SUBSCRIPTION_KEY in .env.local (not asked to paste in chat)"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Create a Veracity OIDC Node backend that runs across multiple instances behind a load balancer.",
+      "expected_output": "OIDC BFF auth with a Redis-backed session store for multi-instance session sharing.",
+      "files": [],
+      "assertions": [
+        "OIDC strategy selected",
+        "connect-redis and ioredis added (multi-instance explicitly required)",
+        "express-session configured with a RedisStore",
+        "User guided to set REDIS_URL via .env.local (treated as a secret)",
+        "Explanation that Redis session store is the equivalent of .NET Redis Data Protection"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "My existing Express + TypeScript project needs Veracity login added without rewriting my server setup.",
+      "expected_output": "Auth integrated into the existing Express project without replacing existing app/server wiring; no baseline re-scaffold; Express adapter used; auth files added and env merged.",
+      "files": [],
+      "assertions": [
+        "Existing project detected as Express -> web-backend-node NOT invoked to re-scaffold",
+        "Express adapter set copied (assets/core/* + assets/express/*)",
+        "Existing project structure preserved (app.ts/server.ts not wholesale replaced)",
+        "Auth files added under src/auth/",
+        "Dependencies added to existing package.json without clobbering existing deps",
+        "env values merged without overwriting existing configuration",
+        "helmet and session middleware inserted at the correct position in the pipeline",
+        "User asked for the Client ID"
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "Add auth to my Node service. It's a bearer-token API consumed by other services, not a website.",
+      "expected_output": "Skill identifies JWT Bearer from the phrasing and configures stateless validation without OIDC session/login.",
+      "files": [],
+      "assertions": [
+        "Skill identifies JWT Bearer strategy from phrasing",
+        "src/auth/jwtMiddleware.ts created (not msalClient/authRoutes)",
+        "No express-session or login/logout routes",
+        "jose used for JWKS validation against JWT_AUTHORITY",
+        "Token lifetime, issuer, and audience validated"
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "A scaffolder created a Web App (BFF) Node project. Add authentication.",
+      "expected_output": "Strategy auto-selected as OIDC because the caller indicated Web App (BFF); no strategy question asked.",
+      "files": [],
+      "assertions": [
+        "Strategy auto-selected as OpenID Connect (Web App -> OIDC)",
+        "User NOT asked about strategy choice (caller provided it)",
+        "msalClient.ts and authRoutes.ts created",
+        "Production B2C tenant values used by default in env files",
+        "Session cookie uses __Host- prefix"
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "I have an existing Fastify + TypeScript API. Add Veracity OpenID Connect login (BFF) to it.",
+      "expected_output": "OIDC BFF auth integrated idiomatically into the existing Fastify app using the Fastify adapter (plugins + preHandler hook), no baseline re-scaffold, no express-session.",
+      "files": [],
+      "assertions": [
+        "Existing project detected as Fastify -> web-backend-node NOT invoked to re-scaffold",
+        "Fastify adapter set copied (assets/core/* + assets/fastify/*), NOT the Express assets",
+        "@fastify/session and @fastify/cookie added (NOT express-session)",
+        "Session registered with __Host-veracity.session cookie (secure, httpOnly, sameSite, path=/)",
+        "authRoutes registered as a Fastify plugin; requireAuth applied as a preHandler",
+        "trustProxy enabled on the Fastify instance",
+        "Unauthenticated /api/* returns 401 (preHandler), health routes stay anonymous",
+        "User guided to set CLIENT_SECRET and SESSION_SECRET in .env.local"
+      ]
+    },
+    {
+      "id": 10,
+      "prompt": "Add Veracity login to my existing NestJS app.",
+      "expected_output": "OIDC BFF auth integrated idiomatically into the existing NestJS app using guards/modules/controllers; express-session wired in main.ts; no baseline re-scaffold.",
+      "files": [],
+      "assertions": [
+        "Existing project detected as NestJS -> web-backend-node NOT invoked to re-scaffold",
+        "NestJS adapter set copied (assets/core/* + assets/nestjs/*), NOT ad-hoc Express middleware",
+        "AuthModule, AuthController, SessionAuthGuard, and MsalService created",
+        "express-session configured in main.ts (Nest-Express platform) with __Host- cookie and trust proxy",
+        "Protected endpoints use @UseGuards(SessionAuthGuard); /api/me returns 401 when unauthenticated",
+        "CommonJS projects: .js import extensions dropped to match tsconfig (or ESM kept if project is ESM)",
+        "User guided to set CLIENT_SECRET and SESSION_SECRET in .env.local"
+      ]
+    },
+    {
+      "id": 11,
+      "prompt": "My NestJS service is a stateless bearer-token API consumed by other services. Add Veracity JWT validation.",
+      "expected_output": "JWT Bearer validation integrated into the existing NestJS app as a JwtAuthGuard using the shared jose verifier; no session, no controllers, no login flow.",
+      "files": [],
+      "assertions": [
+        "Strategy identified as JWT Bearer from phrasing (stateless, bearer-token, service-to-service)",
+        "NestJS JWT adapter copied (assets/core/jwtVerifier.ts + assets/nestjs/jwt/*)",
+        "JwtAuthGuard (CanActivate) created; applied via @UseGuards(JwtAuthGuard)",
+        "No express-session, no auth controller, no login/logout",
+        "jose used for JWKS validation against JWT_AUTHORITY; issuer, audience, lifetime validated",
+        "clockTolerance set to 60 seconds",
+        "No CLIENT_SECRET collected"
+      ]
+    },
+    {
+      "id": 12,
+      "prompt": "Add Veracity OIDC login to my Fastify app and let it call the Veracity API V3 for services and notifications.",
+      "expected_output": "Fastify OIDC BFF auth plus the Veracity API V3 client (openapi-typescript + openapi-fetch) exposed as Fastify proxy plugins under /api/v1/veracity/v3/...",
+      "files": [],
+      "assertions": [
+        "Fastify adapter used for both auth and the API client",
+        "openapi-typescript and openapi-fetch added; veracity:gen script present",
+        "src/veracity/veracityApiClient.ts (core) + src/veracity/veracityApiHelpers.ts (Fastify) created",
+        "src/veracity/apiV3Routes.ts registered as a Fastify plugin with routes /api/v1/veracity/v3/services and /notifications/count",
+        "Downstream token obtained via MSAL acquireTokenSilent using VERACITY_API_SCOPE (userApiToken reads request.session account)",
+        "env contains VERACITY_API_V3_BASE_URL and VERACITY_API_SCOPE (Production values)",
+        "User guided to set VERACITY_SUBSCRIPTION_KEY in .env.local"
+      ]
+    }
+  ]
+}

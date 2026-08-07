@@ -1,0 +1,50 @@
+{
+  "skill_name": "web-backend-node",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Scaffold a new NodeJS Express + TypeScript backend called contoso-reporting with the usual baseline: health checks, security headers, and env-based config. No authentication needed.",
+      "expected_output": "Express 5 + TypeScript project scaffolded from the asset templates: package.json (slug contoso-reporting), tsconfig, src/server.ts, src/app.ts with helmet + health endpoints + /api/v1 anchor + error handler, src/config/env.ts, .env.example, .gitignore. npm install + build verified.",
+      "files": [],
+      "assertions": [
+        "package.json name is contoso-reporting with express, helmet, zod, dotenv dependencies",
+        "src/app.ts registers helmet before routes with 'self'-only CSP directives",
+        "Health endpoints /health, /health/ready, /health/live present and anonymous",
+        "src/routes/apiV1.ts exports the versioned router mounted at /api/v1",
+        "src/config/env.ts validates env with zod and layers .env -> .env.<NODE_ENV> -> .env.local",
+        "Global error handler registered last in app.ts",
+        "No authentication packages (no msal, jose, express-session) and no Veracity references",
+        ".gitignore ignores node_modules/, dist/, .env.local",
+        "npm run build succeeds"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "I have an existing Express + TypeScript service. Add the standard baseline hardening to it — health checks, helmet security headers, and zod-validated env config — without breaking my existing routes.",
+      "expected_output": "Baseline capabilities added additively to the existing project: only missing dependencies installed, helmet inserted first in the pipeline, health endpoints added before any auth, existing routes untouched.",
+      "files": [],
+      "assertions": [
+        "Existing routes and middleware preserved (not moved or rewritten)",
+        "Only missing dependencies added to package.json",
+        "helmet registered before existing routes",
+        "Health endpoints added and anonymous",
+        "/api/v1 router anchor added without re-routing existing endpoints",
+        ".gitignore merged to include .env.local without removing existing entries"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Bootstrap a Node API skeleton for me, default settings are fine.",
+      "expected_output": "New project scaffolded with defaults: name derived from context and confirmed, port 54438, templates copied verbatim with placeholders replaced, build verified.",
+      "files": [],
+      "assertions": [
+        "Project name derived from context (package.json/git/folder) and presented for confirmation",
+        "Default port 54438 used",
+        "Templates copied from assets (not improvised)",
+        "__PROJECT_SLUG__ and __PROJECT_NAME__ placeholders replaced everywhere",
+        "npm install and npm run build executed and passing",
+        "No authentication added"
+      ]
+    }
+  ]
+}

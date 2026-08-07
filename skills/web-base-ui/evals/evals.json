@@ -1,0 +1,84 @@
+{
+  "skill_name": "web-base-ui",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Scaffold a new React + Vite frontend project from scratch. Call it MyPortal.",
+      "expected_output": "A React + Vite + TypeScript welcome-page app scaffolded at src/MyPortal.Client/ with a generated package.json (registry-resolved caret ranges), tsconfig, a vite.config with an HTTPS dev server (self-signed cert via @vitejs/plugin-basic-ssl) but no backend proxy, a welcome page built with the default ShadCN design system, and a passing build. No authentication or backend integration.",
+      "files": [],
+      "assertions": [
+        "Project named MyPortal: package.json name field is 'myportal' or similar, ShadCN deps present (tailwindcss, class-variance-authority), and React+Vite+TypeScript stack used",
+        "Frontend scaffolded into src/MyPortal.Client (app shell App.tsx, main.tsx, index.html, tsconfig.json, vite.config.ts)",
+        "vite.config.ts serves over HTTPS via basicSsl (react() + basicSsl() plugins, server.https) with a dev server only and NO server.proxy block",
+        "package.json is generated at scaffold time (the skill ships none) with versions resolved from the npm registry as caret ranges; typescript stays >=5 <6",
+        "Welcome page built with ShadCN (default design system) implementing the WelcomeExperience contract",
+        "No {{projectName}} placeholder remains in any rendered file",
+        "No authentication, backend proxy, OIDC/JWT, or Veracity packages added",
+        "Frontend build (tsc && vite build) is run to verify it compiles (hard gate; plain-template fallback if ShadCN setup fails)"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Create a new frontend web app. I have no particular design system in mind.",
+      "expected_output": "With no design system configured, the skill defaults to the bundled, MIT-licensed ShadCN copy under vendor/shadcn/ (not a network fetch) and builds the welcome presentation with shadcn primitives.",
+      "files": [],
+      "assertions": [
+        "No project-configured design system detected; the skill defaults to ShadCN",
+        "ShadCN setup uses standard patterns: components.json present, src/lib/utils.ts with cn() helper, Radix UI deps in package.json — consistent with the bundled vendor/shadcn/ guidance",
+        "Presentation built with shadcn primitives satisfies the WelcomeExperience contract; app shell (App.tsx, main.tsx) left intact",
+        "Default tech stack React + Vite + TypeScript is used"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Scaffold a frontend for my existing React project that already uses Material UI (@mui/material is in package.json).",
+      "expected_output": "The skill detects the project's configured design system (MUI) in Phase 0 and builds the welcome presentation with MUI components instead of defaulting to ShadCN.",
+      "files": [],
+      "assertions": [
+        "Phase 0 design-system detection finds @mui/material configured in the project and uses it",
+        "The skill does NOT default to ShadCN because a design system is already configured",
+        "Welcome presentation is built with MUI components and satisfies the WelcomeExperience contract",
+        "App shell (App.tsx, main.tsx) left intact"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Create a frontend web app from scratch. I want it to start on current dependency versions, not whatever was hardcoded when the skill was written.",
+      "expected_output": "The skill ships no static package.json; it generates one at scaffold time from the declarative dependency manifest, resolving each package's latest version from the npm registry within the declared major constraint and writing caret ranges, then verifies npm install succeeds.",
+      "files": [],
+      "assertions": [
+        "No static package.json is rendered from assets/ (the skill ships none); package.json is generated at scaffold time from the Phase 4a dependency manifest",
+        "Each dependency version is resolved from the npm registry within its declared major range and written as a caret range (e.g. react ^19.x.y, vite ^7.x.y), not an exact pin authored in the skill",
+        "typescript respects its annotated ceiling (>=5 <6) so the resolved range never crosses into a disallowed major",
+        "Non-dependency fields are carried verbatim: name set to the project name, version 0.0.1, private true, type module, engines.node >=20.0.0, and the start/dev/build/preview/typecheck scripts",
+        "react and react-dom share the same major and @types/react* are aligned to the resolved react major",
+        "The generated package.json is valid and <pm> install succeeds without manual version adjustments"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Create a welcome-page web app, but I don't want React — build it as vanilla JS/HTML with esbuild as the bundler.",
+      "expected_output": "The user explicitly chose a non-default stack, so the skill reimplements the same welcome-page baseline in vanilla JS/HTML with an esbuild dev server, using the React assets as the reference.",
+      "files": [],
+      "assertions": [
+        "Phase 0 item 3 records the tech stack as vanilla JS/HTML with esbuild (deviating from the React + Vite + TypeScript default because the user asked)",
+        "A welcome page rendering the project name is produced in the chosen stack",
+        "package.json is still generated (Phase 4a) with stack-appropriate deps resolved from the npm registry as caret ranges (no React/Vite deps for the vanilla build)",
+        "No authentication or backend integration is added",
+        "If the vanilla/esbuild build cannot be made to pass, the skill falls back to the default React + Vite + TypeScript stack and informs the user"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Bootstrap a new frontend SPA. The workspace is empty.",
+      "expected_output": "With an empty workspace and no name supplied, the skill resolves a sensible base name (falling back to Web.Demo), confirms it, and scaffolds the React + Vite + TypeScript welcome baseline with the default design system. No backend or auth is added.",
+      "files": [],
+      "assertions": [
+        "Base project name resolved per Phase 1 (git repo / cwd / fallback Web.Demo) — never derived from a scratch/output directory name like 'outputs' or 'workspace'",
+        "Frontend scaffolded into src/{Base}.Client with the welcome page",
+        "package.json generated with registry-resolved caret ranges; build verified",
+        "No authentication, backend proxy, or Veracity packages added (this is a plain baseline)"
+      ]
+    }
+  ]
+}

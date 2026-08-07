@@ -1,0 +1,6 @@
+{
+  "Veracity": {
+    "ClientId": "<your-client-id>",
+    "RedirectUrl": "https://localhost:{PORT}/signin-oidc"
+  }
+}
