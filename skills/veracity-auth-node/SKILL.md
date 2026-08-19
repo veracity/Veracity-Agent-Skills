@@ -118,7 +118,7 @@ The reference file contains everything needed: which packages to add, which asse
 - **Express** (`app.ts`):
   1. `helmet` + `express.json()` (baseline)
   2. Health endpoints (baseline — **above** auth, always anonymous)
-  3. **Auth**: OIDC → `session(...)` + `registerAuthRoutes(app)`; JWT → nothing global (apply `requireAuth` per-router)
+  3. **Auth**: OIDC → `session(...)` + `registerAuthRoutes(app)`; JWT → nothing global (apply `requireAuth` per-router). For OIDC, wire `secret: env.SESSION_SECRET` **directly — never a `?? "…"` fallback** (CWE-259; see the "Never hard-code a fallback secret" rule in `references/oidc.md`).
   4. Protected feature routers / the `/api/v1` anchor
   5. Global error handler last (baseline)
 - **Fastify** (instance registration order): `@fastify/helmet` → health routes → OIDC: `@fastify/cookie` + `@fastify/session` then the `authRoutes` plugin (JWT: none global; apply the `requireAuth` `preHandler` per-route/scope) → protected route plugins → `setErrorHandler` last.

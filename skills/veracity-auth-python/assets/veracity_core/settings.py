@@ -16,7 +16,7 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from veracity_core.constants import (
@@ -64,8 +64,10 @@ class Settings(BaseSettings):
     # behind a single origin). The path segment must stay `/auth/callback` to match the Vite
     # proxy in veracity-auth-ui.
     redirect_uri: str = Field(default="")
-    # Used to sign the session cookie (Starlette / Flask / Django session). Secret.
-    session_secret: str = Field(default="dev-only-insecure-session-secret-change-me")
+    # Used to sign the session cookie (Starlette / Flask / Django session). Secret — must be
+    # supplied via .env / Key Vault, NEVER a hard-coded default (CWE-259). Empty by default so no
+    # credential lives in source; required + validated for OIDC below (fails fast if missing/weak).
+    session_secret: str = Field(default="")
     # __Host- prefix requires Secure + path=/ + no Domain. Keep this true for local HTTPS dev.
     cookie_secure: bool = True
 
@@ -113,6 +115,18 @@ class Settings(BaseSettings):
     def issuer(self) -> str:
         # v2.0 issuer format for B2C.
         return f"{VERACITY_INSTANCE}/{VERACITY_TENANT_ID}/v2.0/"
+
+    @model_validator(mode="after")
+    def _require_session_secret_for_oidc(self) -> "Settings":
+        # Fail fast instead of falling back to a hard-coded default (CWE-259). The session
+        # signing key is only needed for the OIDC (cookie-session) strategy.
+        if self.auth_strategy == "oidc" and len(self.session_secret) < 32:
+            raise ValueError(
+                "SESSION_SECRET must be set to a strong value (>= 32 chars) for the OIDC "
+                "strategy. Provide it via .env (local) or Key Vault / environment (deployed); "
+                "never hard-code a fallback."
+            )
+        return self
 
 
 @lru_cache

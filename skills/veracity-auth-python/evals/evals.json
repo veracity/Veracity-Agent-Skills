@@ -22,6 +22,7 @@
         "Production B2C authority used by default (login.veracity.com/dnvglb2cprod.onmicrosoft.com/B2C_1A_Identity/v2.0)",
         "User guided to set CLIENT_SECRET in .env, not asked to paste it in chat",
         "A strong SESSION_SECRET is generated into the local .env by the skill",
+        "settings.py session_secret has NO hard-coded default and is required/validated (>=32 chars) for OIDC; app fails fast if missing (CWE-259)",
         "Local HTTPS cert and key files are generated in the project and wired into .env",
         "User asked for the Client ID (GUID, non-secret)"
       ]

@@ -16,6 +16,7 @@
         "Unauthenticated /api/* returns 401 instead of redirecting (authMiddleware)",
         "env files contain B2C Production values (B2C_INSTANCE, B2C_DOMAIN, B2C_TENANT_ID, CLIENT_ID)",
         "SESSION_SECRET auto-generated (strong 32-byte random) and written as a real value in .env.local; CLIENT_SECRET written as a placeholder for the user to fill (not asked to paste in chat)",
+        "SESSION_SECRET is a required env-schema field wired directly (secret: env.SESSION_SECRET) with NO hard-coded fallback in app.ts (CWE-259)",
         ".gitignore ignores .env.local"
       ]
     },
