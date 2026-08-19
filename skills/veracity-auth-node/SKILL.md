@@ -21,6 +21,7 @@ It also wires up optional **Veracity Platform API V3/V4** integration (typed cli
 3. **Per-Environment Tenant Values** — Each environment uses its own Veracity B2C tenant. By default all environments target **Production**. Only use Test/Staging when explicitly requested (tables in the reference files).
 4. **Single Strategy Per Project** — Either OpenID Connect **or** JWT Bearer, never both in the same project.
 5. **Cookie Security (OIDC)** — The session cookie uses the `__Host-` prefix (`Secure`, `HttpOnly`, `SameSite`, `Path=/`, no `Domain`), and `/api/*` paths return `401` instead of redirecting to the identity provider.
+6. **Validated Outbound Requests (SSRF)** — BFF proxy endpoints must never issue a server-side request to a caller-influenced absolute URL. The Veracity API client builds outbound calls from a **relative** `path` resolved against the configured base URL and validated against an origin allow-list (`resolveVeracityApiUrl` in `veracityApiClient.ts`); reject absolute/protocol-relative/off-origin values before fetching, and keep call sites `encodeURIComponent`-escaping any user-supplied path segment (CWE-918).
 
 ## Prerequisites — Veracity App Registration
 

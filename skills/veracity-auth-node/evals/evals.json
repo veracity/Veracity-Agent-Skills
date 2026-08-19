@@ -62,6 +62,7 @@
         "src/veracity/apiV3Routes.ts created with /api/services and /api/notifications/count",
         "Downstream token obtained via MSAL acquireTokenSilent using VERACITY_API_SCOPE",
         "env contains VERACITY_API_V3_BASE_URL and VERACITY_API_SCOPE (Production values)",
+        "veracityApiFetch resolves a relative path and validates the destination against the Veracity base origin (allow-list); absolute/protocol-relative/off-origin paths are rejected (CWE-918 SSRF)",
         "User guided to set VERACITY_SUBSCRIPTION_KEY in .env.local (not asked to paste in chat)"
       ]
     },
@@ -178,6 +179,7 @@
         "src/veracity/apiV3Routes.ts registered as a Fastify plugin with routes /api/v1/veracity/v3/services and /notifications/count",
         "Downstream token obtained via MSAL acquireTokenSilent using VERACITY_API_SCOPE (userApiToken reads request.session account)",
         "env contains VERACITY_API_V3_BASE_URL and VERACITY_API_SCOPE (Production values)",
+        "veracityApiFetch resolves a relative path and validates the destination against the Veracity base origin (allow-list); absolute/protocol-relative/off-origin paths are rejected (CWE-918 SSRF)",
         "User guided to set VERACITY_SUBSCRIPTION_KEY in .env.local"
       ]
     }

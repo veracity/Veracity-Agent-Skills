@@ -117,6 +117,15 @@ Only include the V3 and/or V4 lines that match the user's choice.
   Import the generated `paths` types (`apiV3.d.ts` / `apiV4.d.ts`) to type the client. Remove
   the V3 or V4 branch if only one was requested.
 
+  > **SSRF guard (CWE-918) — required.** `veracityApiFetch` must treat its `path` argument as a
+  > **relative** path only. It resolves `path` against the configured version base URL and
+  > validates the resulting URL's origin against an allow-list derived from
+  > `VERACITY_API_V3_BASE_URL` / `VERACITY_API_V4_BASE_URL` (via `resolveVeracityApiUrl`), rejecting
+  > absolute URLs, protocol-relative `//host` authorities, and any value that resolves off the
+  > Veracity origin **before** the request is issued. Never build the outbound URL by concatenating
+  > a caller-influenced value without this validation, and always keep call sites passing
+  > `encodeURIComponent`-escaped relative segments (e.g. `tenantId`).
+
 - **`apiV3Routes.ts`** — the BFF proxy endpoints (require auth). Exposed under the **same
   versioned contract as the .NET BFF** so a `veracity-auth-ui` frontend and its capability
   detection work unchanged:
