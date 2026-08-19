@@ -12,10 +12,12 @@
         "package.json includes express, @azure/msal-node, express-session, helmet, zod",
         "src/auth/msalClient.ts created (ConfidentialClientApplication)",
         "src/auth/authRoutes.ts created with /auth, /auth/challenge, /auth/callback, /api/me, /signOut",
+        "src/auth/safeRedirect.ts created; the returnUrl accepted by /auth/challenge is passed through safeReturnUrl before being stored and before /auth/callback redirects to it, so absolute/protocol-relative/backslash-obfuscated/scheme-bearing values collapse to a safe relative path (CWE-601 open redirect)",
         "Session cookie name uses __Host- prefix (e.g. __Host-veracity.session) with secure + path=/",
         "Unauthenticated /api/* returns 401 instead of redirecting (authMiddleware)",
         "env files contain B2C Production values (B2C_INSTANCE, B2C_DOMAIN, B2C_TENANT_ID, CLIENT_ID)",
-        "User guided to set CLIENT_SECRET and SESSION_SECRET in .env.local (not asked to paste in chat)",
+        "SESSION_SECRET auto-generated (strong 32-byte random) and written as a real value in .env.local; CLIENT_SECRET written as a placeholder for the user to fill (not asked to paste in chat)",
+        "SESSION_SECRET is a required env-schema field wired directly (secret: env.SESSION_SECRET) with NO hard-coded fallback in app.ts (CWE-259)",
         ".gitignore ignores .env.local"
       ]
     },
@@ -61,6 +63,7 @@
         "src/veracity/apiV3Routes.ts created with /api/services and /api/notifications/count",
         "Downstream token obtained via MSAL acquireTokenSilent using VERACITY_API_SCOPE",
         "env contains VERACITY_API_V3_BASE_URL and VERACITY_API_SCOPE (Production values)",
+        "veracityApiFetch resolves a relative path and validates the destination against the Veracity base origin (allow-list); absolute/protocol-relative/off-origin paths are rejected (CWE-918 SSRF)",
         "User guided to set VERACITY_SUBSCRIPTION_KEY in .env.local (not asked to paste in chat)"
       ]
     },
@@ -132,7 +135,7 @@
         "authRoutes registered as a Fastify plugin; requireAuth applied as a preHandler",
         "trustProxy enabled on the Fastify instance",
         "Unauthenticated /api/* returns 401 (preHandler), health routes stay anonymous",
-        "User guided to set CLIENT_SECRET and SESSION_SECRET in .env.local"
+        "SESSION_SECRET auto-generated and written as a real value in .env.local; CLIENT_SECRET written as a placeholder for the user; session secret is required (no hard-coded fallback in code)"
       ]
     },
     {
@@ -147,7 +150,7 @@
         "express-session configured in main.ts (Nest-Express platform) with __Host- cookie and trust proxy",
         "Protected endpoints use @UseGuards(SessionAuthGuard); /api/me returns 401 when unauthenticated",
         "CommonJS projects: .js import extensions dropped to match tsconfig (or ESM kept if project is ESM)",
-        "User guided to set CLIENT_SECRET and SESSION_SECRET in .env.local"
+        "SESSION_SECRET auto-generated and written as a real value in .env.local; CLIENT_SECRET written as a placeholder for the user; session secret is required (no hard-coded fallback in code)"
       ]
     },
     {
@@ -177,6 +180,7 @@
         "src/veracity/apiV3Routes.ts registered as a Fastify plugin with routes /api/v1/veracity/v3/services and /notifications/count",
         "Downstream token obtained via MSAL acquireTokenSilent using VERACITY_API_SCOPE (userApiToken reads request.session account)",
         "env contains VERACITY_API_V3_BASE_URL and VERACITY_API_SCOPE (Production values)",
+        "veracityApiFetch resolves a relative path and validates the destination against the Veracity base origin (allow-list); absolute/protocol-relative/off-origin paths are rejected (CWE-918 SSRF)",
         "User guided to set VERACITY_SUBSCRIPTION_KEY in .env.local"
       ]
     }

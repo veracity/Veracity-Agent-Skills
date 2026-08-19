@@ -195,6 +195,9 @@ AutoTest.Net/
 
 # Installshield output folder
 [Ee]xpress/
+# ...but NOT the Express web-framework adapter assets shipped by the skills (source of truth).
+!skills/**/express/
+!skills/**/express/**
 
 # DocProject is a documentation generator add-in
 DocProject/buildhelp/

@@ -10,6 +10,7 @@
 import type { FastifyRequest, FastifyReply } from "fastify";
 import "@fastify/session";
 import type { SessionUser } from "./claims.js";
+import { safeReturnUrl } from "./safeRedirect.js";
 
 export type { SessionUser } from "./claims.js";
 
@@ -39,6 +40,6 @@ export async function requireAuth(
     return;
   }
 
-  const returnUrl = encodeURIComponent(request.url);
+  const returnUrl = encodeURIComponent(safeReturnUrl(request.url));
   await reply.redirect(`/auth/challenge?returnUrl=${returnUrl}`);
 }

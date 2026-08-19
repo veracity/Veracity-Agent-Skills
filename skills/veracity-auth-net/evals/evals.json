@@ -11,6 +11,7 @@
         "Project files exist under src/Veracity.MyApp.Web/ (path ends in .Web for OIDC)",
         "VeracityAuthExtensions.cs created in Extensions/ folder",
         "AuthEndpoints.cs created in Endpoints/ folder (OIDC BFF includes auth endpoints)",
+        "SafeRedirect.cs created in Extensions/ folder; the /auth/challenge returnUrl is passed through SafeRedirect.SanitizeReturnUrl (Url.IsLocalUrl-equivalent) rather than Uri.IsWellFormedUriString, so protocol-relative (//host) and backslash-obfuscated values collapse to / (CWE-601 open redirect)",
         "VeracityV4Endpoints.cs created in Endpoints/ folder",
         ".csproj references Veracity.Common.OAuth.AspNetCore package",
         ".csproj references Veracity.Core.Api.V4 package",

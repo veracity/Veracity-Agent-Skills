@@ -17,10 +17,12 @@ It also wires up optional **Veracity Platform API V3/V4** integration (typed cli
 ## Non-Negotiable Security Rules
 
 1. **Secrets Never in Source** — `CLIENT_SECRET`, `SESSION_SECRET`, the API `Ocp-Apim-Subscription-Key`, and Redis connection strings must never appear in committed files. Use the gitignored `.env.local` for local development and environment variables / Azure Key Vault for deployed environments.
-2. **Secrets Never in Conversation** — Never ask the user to paste secret values into the chat. Instead, **generate a gitignored `.env.local` scaffold** containing every secret and app-registration value the chosen strategy needs, each with a clearly-marked placeholder (e.g. `CLIENT_SECRET=YOUR_CLIENT_SECRET_HERE`), and have the user fill in the real values themselves. Do not merely tell them which lines to add — write the file so they only have to edit values. Non-secret values (Client ID, audience) are safe to ask for.
+2. **Secrets Never in Conversation** — Never ask the user to paste secret values into the chat. Instead, **generate a gitignored `.env.local` scaffold** containing every secret and app-registration value the chosen strategy needs. For secrets that come from an external source (e.g. `CLIENT_SECRET`, `REDIS_URL`), write a clearly-marked placeholder (e.g. `CLIENT_SECRET=YOUR_CLIENT_SECRET_HERE`) and have the user fill in the real value themselves. For an **app-internal** secret with no external source — the OIDC session signing key `SESSION_SECRET` — **generate a strong 32-byte random value yourself and write the real value** (`node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"`), never a placeholder and never a hard-coded fallback in source. Do not merely tell the user which lines to add — write the file so they only have to edit placeholder values. Non-secret values (Client ID, audience) are safe to ask for.
 3. **Per-Environment Tenant Values** — Each environment uses its own Veracity B2C tenant. By default all environments target **Production**. Only use Test/Staging when explicitly requested (tables in the reference files).
 4. **Single Strategy Per Project** — Either OpenID Connect **or** JWT Bearer, never both in the same project.
 5. **Cookie Security (OIDC)** — The session cookie uses the `__Host-` prefix (`Secure`, `HttpOnly`, `SameSite`, `Path=/`, no `Domain`), and `/api/*` paths return `401` instead of redirecting to the identity provider.
+6. **Validated Outbound Requests (SSRF)** — BFF proxy endpoints must never issue a server-side request to a caller-influenced absolute URL. The Veracity API client builds outbound calls from a **relative** `path` resolved against the configured base URL and validated against an origin allow-list (`resolveVeracityApiUrl` in `veracityApiClient.ts`); reject absolute/protocol-relative/off-origin values before fetching, and keep call sites `encodeURIComponent`-escaping any user-supplied path segment (CWE-918).
+7. **Validated Redirects (Open Redirect)** — The OIDC `returnUrl` is caller-supplied and must never drive a redirect without validation. Route every `returnUrl` (from `?returnUrl=`, `req.originalUrl`/`request.url`, or the stored session value) through `safeReturnUrl` in `safeRedirect.ts` before storing it in the session or passing it to `res.redirect(...)` — it collapses any absolute, protocol-relative (`//host`), backslash-obfuscated, or scheme-bearing value to a safe root-relative path. Validate on both store (`/auth/challenge`) and use (`/auth/callback`) as defense-in-depth (CWE-601).
 
 ## Prerequisites — Veracity App Registration
 
@@ -118,7 +120,7 @@ The reference file contains everything needed: which packages to add, which asse
 - **Express** (`app.ts`):
   1. `helmet` + `express.json()` (baseline)
   2. Health endpoints (baseline — **above** auth, always anonymous)
-  3. **Auth**: OIDC → `session(...)` + `registerAuthRoutes(app)`; JWT → nothing global (apply `requireAuth` per-router)
+  3. **Auth**: OIDC → `session(...)` + `registerAuthRoutes(app)`; JWT → nothing global (apply `requireAuth` per-router). For OIDC, wire `secret: env.SESSION_SECRET` **directly — never a `?? "…"` fallback** (CWE-259; see the "Never hard-code a fallback secret" rule in `references/oidc.md`).
   4. Protected feature routers / the `/api/v1` anchor
   5. Global error handler last (baseline)
 - **Fastify** (instance registration order): `@fastify/helmet` → health routes → OIDC: `@fastify/cookie` + `@fastify/session` then the `authRoutes` plugin (JWT: none global; apply the `requireAuth` `preHandler` per-route/scope) → protected route plugins → `setErrorHandler` last.
@@ -136,8 +138,9 @@ Follow `references/apiclient.md`. Generate the Veracity Platform API V3/V4 typed
 
 ## Phase 5: Secure & Verify
 
-- [ ] **Generate a gitignored `.env.local` scaffold.** Confirm `.gitignore` covers `.env.local` first, then write a `.env.local` containing a placeholder line for every secret and app-registration value the chosen strategy needs so the user only has to fill in values (not create the file):
-  - OIDC: `CLIENT_ID`, `CLIENT_SECRET`, `SESSION_SECRET` (and `REDIS_URL` if Redis was requested).
+- [ ] **Generate a gitignored `.env.local` scaffold.** Confirm `.gitignore` covers `.env.local` first, then write a `.env.local` containing a line for every secret and app-registration value the chosen strategy needs so the user only has to fill in the placeholder values (not create the file):
+  - OIDC: `CLIENT_ID`, `CLIENT_SECRET` (placeholders for the user), `SESSION_SECRET` (and `REDIS_URL` if Redis was requested).
+    - **`SESSION_SECRET` is auto-generated, not a placeholder.** Generate a strong 32-byte random value and write the real value directly: `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"`. It must satisfy the required `z.string().min(32)` schema field; the app fails fast if it is missing. Never wire it with a hard-coded `?? "…"` fallback in code.
   - JWT: any client-credentials secret the app needs (e.g. `CLIENT_SECRET`) — often none.
   - Veracity API client (Phase 4): `VERACITY_SUBSCRIPTION_KEY`. `VERACITY_SERVICE_ID` is required **only** for the **V4** `policy/validate` endpoint — the V3 `policy/validate` endpoint does not need it, so omit it for V3-only apps.
   - Never put real secret values in `.env` (committed) or `.env.example` — only placeholders in `.env.local`.
@@ -189,6 +192,7 @@ Copy the **shared core** (once) plus the **adapter set for the detected framewor
 |-------|-------------|-------------|
 | `assets/express/oidc/authMiddleware.ts` | `src/auth/authMiddleware.ts` | Session guard; `/api/*` → 401, else challenge |
 | `assets/express/oidc/authRoutes.ts` | `src/auth/authRoutes.ts` | `/auth`, `/auth/challenge`, `/auth/callback`, `/api/me`, `/signOut` |
+| `assets/express/oidc/safeRedirect.ts` | `src/auth/safeRedirect.ts` | `safeReturnUrl` open-redirect guard (CWE-601) for the OIDC `returnUrl` |
 | `assets/express/jwt/jwtMiddleware.ts` | `src/auth/jwtMiddleware.ts` | `requireAuth` bearer middleware (uses core verifier) |
 | `assets/express/apiclient/veracityApiMiddleware.ts` | `src/veracity/veracityApiMiddleware.ts` | `userApiToken(req)` + re-exports of the core helpers |
 | `assets/express/apiclient/apiV3Routes.ts` | `src/veracity/apiV3Routes.ts` | BFF V3 proxy routes under `/api/v1/veracity/v3/...` |
@@ -200,6 +204,7 @@ Copy the **shared core** (once) plus the **adapter set for the detected framewor
 |-------|-------------|-------------|
 | `assets/fastify/oidc/authPlugin.ts` | `src/auth/authPlugin.ts` | `requireAuth` `preHandler`; `/api/*` → 401, else challenge; session augmentation |
 | `assets/fastify/oidc/authRoutes.ts` | `src/auth/authRoutes.ts` | Auth endpoints as a Fastify plugin |
+| `assets/fastify/oidc/safeRedirect.ts` | `src/auth/safeRedirect.ts` | `safeReturnUrl` open-redirect guard (CWE-601) for the OIDC `returnUrl` |
 | `assets/fastify/jwt/jwtPlugin.ts` | `src/auth/jwtPlugin.ts` | `requireAuth` `preHandler` bearer validation (uses core verifier) |
 | `assets/fastify/apiclient/veracityApiHelpers.ts` | `src/veracity/veracityApiHelpers.ts` | `userApiToken(request)` + re-exports of the core helpers |
 | `assets/fastify/apiclient/apiV3Routes.ts` | `src/veracity/apiV3Routes.ts` | BFF V3 proxy plugin under `/api/v1/veracity/v3/...` |
@@ -213,6 +218,7 @@ Copy the **shared core** (once) plus the **adapter set for the detected framewor
 | `assets/nestjs/oidc/msal.service.ts` | `src/auth/msal.service.ts` | Injectable `MsalService` wrapping the core MSAL client |
 | `assets/nestjs/oidc/session-auth.guard.ts` | `src/auth/session-auth.guard.ts` | `SessionAuthGuard` (`CanActivate`) → 401 when unauthenticated |
 | `assets/nestjs/oidc/auth.controller.ts` | `src/auth/auth.controller.ts` | `/auth`, `/auth/challenge`, `/auth/callback`, `/api/me`, `/signOut` |
+| `assets/nestjs/oidc/safeRedirect.ts` | `src/auth/safeRedirect.ts` | `safeReturnUrl` open-redirect guard (CWE-601) for the OIDC `returnUrl` |
 | `assets/nestjs/oidc/auth.module.ts` | `src/auth/auth.module.ts` | `AuthModule` wiring service + guard + controller |
 | `assets/nestjs/jwt/jwt-auth.guard.ts` | `src/auth/jwt-auth.guard.ts` | `JwtAuthGuard` (`CanActivate`) bearer validation (uses core verifier) |
 | `assets/nestjs/jwt/jwt.module.ts` | `src/auth/jwt.module.ts` | `JwtModule` exporting the guard |

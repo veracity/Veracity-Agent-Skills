@@ -26,12 +26,16 @@ def test_security_headers_present():
     assert "Content-Security-Policy" in h
     assert h["X-Content-Type-Options"] == "nosniff"
     assert h["X-Frame-Options"] == "DENY"
+    assert h["X-XSS-Protection"] == "0"
+    assert h["X-Permitted-Cross-Domain-Policies"] == "none"
     assert "Strict-Transport-Security" in h
 
 
 def test_csp_is_generic_self_only():
-    # Baseline ships a generic 'self'-only CSP with no external hosts.
+    # Baseline ships a locked-down 'self'-only CSP with no external hosts.
     csp = _client().get("/health").headers["Content-Security-Policy"]
     assert "default-src 'self'" in csp
+    assert "base-uri 'none'" in csp
     assert "form-action 'self'" in csp
+    assert "'unsafe-inline'" not in csp
     assert "https://" not in csp

@@ -74,9 +74,43 @@ export function createVeracityClient<Paths extends object>(
 }
 
 /**
+ * Allow-list of outbound origins for the Veracity API, derived from the configured base URLs.
+ * Any resolved request URL whose origin is not in this set is refused (CWE-918 SSRF guard).
+ */
+function allowedApiOrigins(): Set<string> {
+  const origins = new Set<string>();
+  for (const base of [env.VERACITY_API_V3_BASE_URL, env.VERACITY_API_V4_BASE_URL]) {
+    if (base) {
+      origins.add(new URL(base).origin);
+    }
+  }
+  return origins;
+}
+
+/**
+ * Resolve a caller-supplied **relative** API `path` against the configured Veracity base URL for
+ * `version` and validate the result against the allow-list of Veracity origins. Rejects absolute
+ * URLs, protocol-relative authorities (`//host`), and anything that resolves off the expected
+ * origin, so an upstream-influenced value cannot redirect the server-side request (CWE-918 SSRF).
+ */
+export function resolveVeracityApiUrl(version: ApiVersion, path: string): URL {
+  if (typeof path !== "string" || !path.startsWith("/") || path.startsWith("//")) {
+    throw new Error(
+      `Invalid Veracity API path (must be a relative path starting with a single "/"): ${path}`,
+    );
+  }
+  const url = new URL(`${baseUrlFor(version)}${path}`);
+  if (!allowedApiOrigins().has(url.origin)) {
+    throw new Error(`Refusing to call a non-allow-listed Veracity API origin: ${url.origin}`);
+  }
+  return url;
+}
+
+/**
  * Raw fetch against the Veracity API (used by the BFF proxy endpoints, which simply forward
  * the upstream response). Adds the ****** + subscription key. The path is relative to the
- * version base URL (e.g. "/my/services").
+ * version base URL (e.g. "/my/services") and is validated against the Veracity origin allow-list
+ * before the request is issued (CWE-918 SSRF guard).
  */
 export function veracityApiFetch(
   version: ApiVersion,
@@ -84,10 +118,11 @@ export function veracityApiFetch(
   token: string,
   method: "GET" | "POST" = "GET",
 ): Promise<Response> {
+  const url = resolveVeracityApiUrl(version, path);
   const headers = new Headers();
   withAuthHeaders(headers, token);
   headers.set("Accept", "application/json");
-  return fetch(`${baseUrlFor(version)}${path}`, { method, headers });
+  return fetch(url, { method, headers });
 }
 
 /**

@@ -3,6 +3,11 @@
 // Loading order (last wins): .env -> .env.<NODE_ENV> -> .env.local
 //
 // Auth skills (e.g. veracity-auth-node) extend this schema with their own fields.
+//
+// Secrets rule: declare secret fields as REQUIRED and validated (e.g.
+// `z.string().min(32)`), never `.optional()`, so `env.<SECRET>` is typed `string`
+// and consumers never need a hard-coded `?? "…"` fallback (a hard-coded credential
+// finding). A missing/weak secret then fails fast here at startup.
 
 import { config as loadEnv } from "dotenv";
 import { z } from "zod";

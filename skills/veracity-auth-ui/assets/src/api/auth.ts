@@ -1,3 +1,5 @@
+import { toRelativeReturnUrl } from './safeRedirect'
+
 export interface AuthStatus {
   result: boolean
 }
@@ -19,9 +21,11 @@ function currentReturnUrl(): string {
 // Full-page navigation to the BFF OIDC challenge. B2C performs sign-in (or silent
 // re-auth if a session already exists) and redirects back to returnUrl via
 // /signin-oidc. A full navigation is required — fetch() would follow the 302 into
-// B2C cross-origin and fail with CORS.
+// B2C cross-origin and fail with CORS. The returnUrl is coerced to a same-origin
+// relative path (open-redirect guard, CWE-601) even if a caller passes it explicitly.
 export function signIn(returnUrl: string = currentReturnUrl()): void {
-  window.location.href = `/auth/challenge?returnUrl=${encodeURIComponent(returnUrl)}`
+  const safeReturnUrl = toRelativeReturnUrl(returnUrl)
+  window.location.href = `/auth/challenge?returnUrl=${encodeURIComponent(safeReturnUrl)}`
 }
 
 // Full-page navigation to the BFF sign-out endpoint.

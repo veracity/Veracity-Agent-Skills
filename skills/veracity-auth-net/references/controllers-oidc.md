@@ -37,7 +37,7 @@ Copy these **instead of** the Minimal-API endpoint files listed in `oidc.md` Ste
 - `assets/controllers/VeracityV3Controller.cs` → `Controllers/VeracityV3Controller.cs` (only if V3 selected in Step 1)
 - `assets/controllers/VeracityV4Controller.cs` → `Controllers/VeracityV4Controller.cs` (only if V4 selected in Step 1)
 
-`assets/VeracityAuthExtensions.cs` → `Extensions/VeracityAuthExtensions.cs` is unchanged from `oidc.md` Step 3 — copy it as described there.
+`assets/VeracityAuthExtensions.cs` → `Extensions/VeracityAuthExtensions.cs` is unchanged from `oidc.md` Step 3 — copy it as described there. Also copy `assets/SafeRedirect.cs` → `Extensions/SafeRedirect.cs` (the open-redirect guard, used by `AuthController.ChallengeSignIn` and the token-cache-recovery challenge) exactly as in `oidc.md` Step 3.
 
 ---
 

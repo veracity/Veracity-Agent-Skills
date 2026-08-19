@@ -63,9 +63,7 @@ public class AuthController : ControllerBase
     [ApiExplorerSettings(IgnoreApi = true)]
     public IActionResult ChallengeSignIn([FromQuery] string? returnUrl = null)
     {
-        var redirectUri = !string.IsNullOrEmpty(returnUrl) && Uri.IsWellFormedUriString(returnUrl, UriKind.Relative)
-            ? returnUrl
-            : "/";
+        var redirectUri = SafeRedirect.SanitizeReturnUrl(returnUrl);
 
         return Challenge(
             new AuthenticationProperties { RedirectUri = redirectUri },

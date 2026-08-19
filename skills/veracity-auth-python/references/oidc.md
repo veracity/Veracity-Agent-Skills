@@ -96,12 +96,17 @@ the full reference test surface.
   authorized for the Veracity API scope. `timeout` is raised above httpx's 5s default (see Error
   recovery). `offline_access` still yields a refresh token.
 - `/auth/challenge` calls `authorize_redirect` (Authlib generates state + PKCE automatically).
+  The `returnUrl` query parameter is sanitized with `safe_return_url` (`veracity_core/redirects.py`)
+  before being stored in the session — a protocol-relative (`//host`) or absolute value collapses
+  to `/` so it cannot become an off-site redirect after login (CWE-601 open redirect).
   The redirect (callback) URI is `settings.redirect_uri` when set, otherwise it is derived from
   the incoming request (`/auth/callback` on the backend host).
 - `/auth/callback` calls `authorize_access_token`, reads `userinfo` claims into the session, and
   stores the user's **API-scoped access token** so the `/api/v1/veracity/...` proxy routes can call
-  the Platform API as the signed-in user. On the FastAPI/Flask signed-cookie session the refresh
-  token is **not** stored (the ~4 KB cookie limit); Django's server-side session keeps it.
+  the Platform API as the signed-in user. The stored `return_url` is re-sanitized with
+  `safe_return_url` before the redirect (defense-in-depth). On the FastAPI/Flask signed-cookie
+  session the refresh token is **not** stored (the ~4 KB cookie limit); Django's server-side
+  session keeps it.
 
 `assets/app/main.py` (OIDC branch) adds Starlette `SessionMiddleware`:
 - `session_cookie="__Host-session"` and `https_only=True` when `cookie_secure` is true. The

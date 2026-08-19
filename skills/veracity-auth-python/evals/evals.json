@@ -16,12 +16,14 @@
         "Strategy determined as OpenID Connect (BFF)",
         "Authlib used for the OIDC login flow (authorize_redirect / authorize_access_token)",
         "app/auth/oidc.py created with /auth, /auth/challenge, /auth/callback, /api/me, /signout",
+        "veracity_core/redirects.py created; the /auth/challenge returnUrl is passed through safe_return_url before it is stored in the session and before the /auth/callback redirect, so protocol-relative (//host) / absolute / backslash-obfuscated values collapse to / (CWE-601 open redirect)",
         "Starlette SessionMiddleware configured with __Host- prefixed cookie when COOKIE_SECURE",
         "Local development starts over HTTPS (for example via app/dev_server.py or uv run veracity-dev) with cert/key configuration",
         "/api/me returns 401 (not a redirect) when unauthenticated",
         "Production B2C authority used by default (login.veracity.com/dnvglb2cprod.onmicrosoft.com/B2C_1A_Identity/v2.0)",
         "User guided to set CLIENT_SECRET in .env, not asked to paste it in chat",
         "A strong SESSION_SECRET is generated into the local .env by the skill",
+        "settings.py session_secret has NO hard-coded default and is required/validated (>=32 chars) for OIDC; app fails fast if missing (CWE-259)",
         "Local HTTPS cert and key files are generated in the project and wired into .env",
         "User asked for the Client ID (GUID, non-secret)"
       ]

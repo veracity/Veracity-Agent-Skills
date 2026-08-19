@@ -54,8 +54,11 @@ Copy these asset files into the project, replacing `{{ProjectName}}` placeholder
     - V3: `services.AddVeracityServices(configuration.GetValue<string>("Veracity:MyServicesApi"));`
     - Both: include both lines.
 - `assets/AuthEndpoints.cs` → `Endpoints/AuthEndpoints.cs`
+- `assets/SafeRedirect.cs` → `Extensions/SafeRedirect.cs` (open-redirect guard used by the `/auth/challenge` `returnUrl` and the token-cache-recovery challenge)
 - `assets/VeracityV3Endpoints.cs` → `Endpoints/VeracityV3Endpoints.cs` (only if V3 selected)
 - `assets/VeracityV4Endpoints.cs` → `Endpoints/VeracityV4Endpoints.cs` (only if V4 selected)
+
+> **Open-redirect guard (`SafeRedirect`, CWE-601)** — the `returnUrl` accepted by `/auth/challenge` is caller-supplied and must never become the `AuthenticationProperties.RedirectUri` without validation. `Uri.IsWellFormedUriString(returnUrl, UriKind.Relative)` is **not** sufficient: a protocol-relative value like `//evil.com` is a well-formed relative URI yet the browser follows it off-site. `SafeRedirect.SanitizeReturnUrl` mirrors ASP.NET Core's `Url.IsLocalUrl` and collapses any absolute, protocol-relative, or backslash-obfuscated value to `/`. The fixed `Veracity:LogoutRedirectUri` is not user input and is used as-is.
 
 ---
 

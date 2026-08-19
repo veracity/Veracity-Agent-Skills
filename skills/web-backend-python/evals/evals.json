@@ -15,12 +15,12 @@
         "app/main.py create_app adds SecurityHeadersMiddleware, ProblemDetails handlers, health router, and the versioned /api/v1 router",
         "app/health.py maps /health, /health/ready, /health/live (anonymous)",
         "app/api/v1.py exposes an APIRouter with prefix /api/v1",
-        "app/security_headers.py adds CSP, HSTS, X-Frame-Options, X-Content-Type-Options",
+        "app/security_headers.py adds CSP, HSTS, X-Frame-Options (DENY), X-Content-Type-Options, X-XSS-Protection, X-Permitted-Cross-Domain-Policies",
         "app/problem_details.py returns application/problem+json for errors",
         "pyproject.toml depends on fastapi, uvicorn, pydantic, pydantic-settings (dev: pytest, httpx, ruff, mypy)",
         "No authentication: no authlib, msal, pyjwt, session middleware, or login endpoints",
         "No Veracity packages or Veracity-specific config referenced",
-        "app/settings.py CSP is generic 'self'-only with no external hostnames",
+        "app/settings.py CSP is a locked-down 'self'-only policy (base-uri 'none', style-src 'self' with no 'unsafe-inline') mirroring the .NET/Node baseline, with no external hostnames and stricter framing (frame-ancestors 'none')",
         "HTTPS-first dev server (app/dev_server.py, web-dev script) reads HTTPS cert/key from settings"
       ]
     },

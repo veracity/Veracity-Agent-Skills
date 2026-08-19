@@ -22,6 +22,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import JSONResponse, RedirectResponse
 
 from app.settings import VERACITY_OIDC_METADATA_URL, Settings, get_settings
+from veracity_core.redirects import safe_return_url
 
 oauth = OAuth()
 
@@ -60,7 +61,7 @@ async def auth_status(request: Request) -> dict[str, bool]:
 async def challenge(
     request: Request, returnUrl: str = "/", settings: Settings = Depends(get_settings)
 ):
-    request.session["return_url"] = returnUrl
+    request.session["return_url"] = safe_return_url(returnUrl)
     # Prefer the configured redirect URI (e.g. the Vite proxy origin the SPA runs on) so
     # B2C returns the browser to the same origin that holds the session cookie. Fall back
     # to deriving the callback from the request when unset (single-origin / prod).
@@ -87,7 +88,7 @@ async def callback(request: Request):
     # refresh, switch to a server-side session store (see references/oidc.md).
     if "access_token" in token:
         request.session["access_token"] = token["access_token"]
-    return_url = request.session.pop("return_url", "/")
+    return_url = safe_return_url(request.session.pop("return_url", "/"))
     return RedirectResponse(url=return_url)
 
 
