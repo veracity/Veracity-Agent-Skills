@@ -13,18 +13,27 @@ export function createApp(): Express {
   app.set("trust proxy", 1);
 
   // Security headers (equivalent of the .NET SecurityHeadersMiddleware + CSP).
-  // CSP defaults are intentionally generic ('self'-only) so the baseline has no
-  // external dependencies. Auth skills extend these directives when they add their
-  // own CDN and login endpoints.
+  // The CSP directives below mirror the web-backend-net baseline exactly. They are
+  // intentionally locked down ('self'-only, no external sources) so the baseline has no
+  // external dependencies. `useDefaults: false` means ONLY the directives listed here are
+  // emitted, keeping the header identical to the .NET policy. Auth skills extend these
+  // directives when they add their own CDN and login endpoints.
   app.use(
     helmet({
       contentSecurityPolicy: {
+        useDefaults: false,
         directives: {
+          baseUri: ["'none'"],
           defaultSrc: ["'self'"],
-          scriptSrc: ["'self'"],
-          styleSrc: ["'self'", "'unsafe-inline'"],
-          imgSrc: ["'self'", "data:"],
           connectSrc: ["'self'"],
+          scriptSrc: ["'self'"],
+          fontSrc: ["'self'", "data:"],
+          mediaSrc: ["'self'"],
+          workerSrc: ["'self'", "blob:"],
+          imgSrc: ["'self'", "data:"],
+          frameSrc: ["'none'"],
+          styleSrc: ["'self'"],
+          frameAncestors: ["'self'"],
         },
       },
     }),

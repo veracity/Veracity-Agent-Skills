@@ -123,7 +123,7 @@ public static class VeracityAuthExtensions
                         context.User.Identity?.Name);
 
                     await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-                    var returnUrl = context.Request.Path + context.Request.QueryString;
+                    var returnUrl = SafeRedirect.SanitizeReturnUrl(context.Request.Path + context.Request.QueryString);
                     await context.ChallengeAsync(OpenIdConnectDefaults.AuthenticationScheme,
                         new AuthenticationProperties { RedirectUri = returnUrl });
                     return;

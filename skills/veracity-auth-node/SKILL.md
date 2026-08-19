@@ -22,6 +22,7 @@ It also wires up optional **Veracity Platform API V3/V4** integration (typed cli
 4. **Single Strategy Per Project** — Either OpenID Connect **or** JWT Bearer, never both in the same project.
 5. **Cookie Security (OIDC)** — The session cookie uses the `__Host-` prefix (`Secure`, `HttpOnly`, `SameSite`, `Path=/`, no `Domain`), and `/api/*` paths return `401` instead of redirecting to the identity provider.
 6. **Validated Outbound Requests (SSRF)** — BFF proxy endpoints must never issue a server-side request to a caller-influenced absolute URL. The Veracity API client builds outbound calls from a **relative** `path` resolved against the configured base URL and validated against an origin allow-list (`resolveVeracityApiUrl` in `veracityApiClient.ts`); reject absolute/protocol-relative/off-origin values before fetching, and keep call sites `encodeURIComponent`-escaping any user-supplied path segment (CWE-918).
+7. **Validated Redirects (Open Redirect)** — The OIDC `returnUrl` is caller-supplied and must never drive a redirect without validation. Route every `returnUrl` (from `?returnUrl=`, `req.originalUrl`/`request.url`, or the stored session value) through `safeReturnUrl` in `safeRedirect.ts` before storing it in the session or passing it to `res.redirect(...)` — it collapses any absolute, protocol-relative (`//host`), backslash-obfuscated, or scheme-bearing value to a safe root-relative path. Validate on both store (`/auth/challenge`) and use (`/auth/callback`) as defense-in-depth (CWE-601).
 
 ## Prerequisites — Veracity App Registration
 
@@ -191,6 +192,7 @@ Copy the **shared core** (once) plus the **adapter set for the detected framewor
 |-------|-------------|-------------|
 | `assets/express/oidc/authMiddleware.ts` | `src/auth/authMiddleware.ts` | Session guard; `/api/*` → 401, else challenge |
 | `assets/express/oidc/authRoutes.ts` | `src/auth/authRoutes.ts` | `/auth`, `/auth/challenge`, `/auth/callback`, `/api/me`, `/signOut` |
+| `assets/express/oidc/safeRedirect.ts` | `src/auth/safeRedirect.ts` | `safeReturnUrl` open-redirect guard (CWE-601) for the OIDC `returnUrl` |
 | `assets/express/jwt/jwtMiddleware.ts` | `src/auth/jwtMiddleware.ts` | `requireAuth` bearer middleware (uses core verifier) |
 | `assets/express/apiclient/veracityApiMiddleware.ts` | `src/veracity/veracityApiMiddleware.ts` | `userApiToken(req)` + re-exports of the core helpers |
 | `assets/express/apiclient/apiV3Routes.ts` | `src/veracity/apiV3Routes.ts` | BFF V3 proxy routes under `/api/v1/veracity/v3/...` |
@@ -202,6 +204,7 @@ Copy the **shared core** (once) plus the **adapter set for the detected framewor
 |-------|-------------|-------------|
 | `assets/fastify/oidc/authPlugin.ts` | `src/auth/authPlugin.ts` | `requireAuth` `preHandler`; `/api/*` → 401, else challenge; session augmentation |
 | `assets/fastify/oidc/authRoutes.ts` | `src/auth/authRoutes.ts` | Auth endpoints as a Fastify plugin |
+| `assets/fastify/oidc/safeRedirect.ts` | `src/auth/safeRedirect.ts` | `safeReturnUrl` open-redirect guard (CWE-601) for the OIDC `returnUrl` |
 | `assets/fastify/jwt/jwtPlugin.ts` | `src/auth/jwtPlugin.ts` | `requireAuth` `preHandler` bearer validation (uses core verifier) |
 | `assets/fastify/apiclient/veracityApiHelpers.ts` | `src/veracity/veracityApiHelpers.ts` | `userApiToken(request)` + re-exports of the core helpers |
 | `assets/fastify/apiclient/apiV3Routes.ts` | `src/veracity/apiV3Routes.ts` | BFF V3 proxy plugin under `/api/v1/veracity/v3/...` |
@@ -215,6 +218,7 @@ Copy the **shared core** (once) plus the **adapter set for the detected framewor
 | `assets/nestjs/oidc/msal.service.ts` | `src/auth/msal.service.ts` | Injectable `MsalService` wrapping the core MSAL client |
 | `assets/nestjs/oidc/session-auth.guard.ts` | `src/auth/session-auth.guard.ts` | `SessionAuthGuard` (`CanActivate`) → 401 when unauthenticated |
 | `assets/nestjs/oidc/auth.controller.ts` | `src/auth/auth.controller.ts` | `/auth`, `/auth/challenge`, `/auth/callback`, `/api/me`, `/signOut` |
+| `assets/nestjs/oidc/safeRedirect.ts` | `src/auth/safeRedirect.ts` | `safeReturnUrl` open-redirect guard (CWE-601) for the OIDC `returnUrl` |
 | `assets/nestjs/oidc/auth.module.ts` | `src/auth/auth.module.ts` | `AuthModule` wiring service + guard + controller |
 | `assets/nestjs/jwt/jwt-auth.guard.ts` | `src/auth/jwt-auth.guard.ts` | `JwtAuthGuard` (`CanActivate`) bearer validation (uses core verifier) |
 | `assets/nestjs/jwt/jwt.module.ts` | `src/auth/jwt.module.ts` | `JwtModule` exporting the guard |

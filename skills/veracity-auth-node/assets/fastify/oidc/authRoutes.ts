@@ -17,6 +17,7 @@ import { env } from "../config/env.js";
 import { getAuthCodeUrl, acquireTokenByCode } from "./msalClient.js";
 import { mapClaims } from "./claims.js";
 import { isAuthenticated, requireAuth } from "./authPlugin.js";
+import { safeReturnUrl } from "./safeRedirect.js";
 
 export const authRoutes: FastifyPluginAsync = async (fastify: FastifyInstance) => {
   // Sign-in status check.
@@ -42,7 +43,7 @@ export const authRoutes: FastifyPluginAsync = async (fastify: FastifyInstance) =
     async (request, reply) => {
       const state = randomUUID();
       request.session.authState = state;
-      request.session.returnUrl = request.query.returnUrl ?? "/";
+      request.session.returnUrl = safeReturnUrl(request.query.returnUrl);
       const url = await getAuthCodeUrl(state);
       await reply.redirect(url);
     },
@@ -62,7 +63,7 @@ export const authRoutes: FastifyPluginAsync = async (fastify: FastifyInstance) =
       const claims = (result.idTokenClaims ?? {}) as Record<string, unknown>;
       request.session.user = mapClaims(claims, result.account!);
 
-      const returnUrl = request.session.returnUrl ?? "/";
+      const returnUrl = safeReturnUrl(request.session.returnUrl);
       request.session.authState = undefined;
       request.session.returnUrl = undefined;
       await reply.redirect(returnUrl);

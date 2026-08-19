@@ -32,6 +32,7 @@ from flask import (
 )
 
 from veracity_core.constants import VERACITY_OIDC_METADATA_URL
+from veracity_core.redirects import safe_return_url
 from veracity_core.settings import Settings, get_settings
 from veracity_flask import veracity_api
 
@@ -85,7 +86,7 @@ def auth_status():
 
 @bp.get("/auth/challenge")
 def challenge():
-    session["return_url"] = request.args.get("returnUrl", "/")
+    session["return_url"] = safe_return_url(request.args.get("returnUrl", "/"))
     # Prefer the configured redirect URI (e.g. the Vite proxy origin the SPA runs on) so
     # B2C returns the browser to the same origin that holds the session cookie.
     redirect_uri = _settings().redirect_uri or url_for(
@@ -113,7 +114,7 @@ def callback():
     # silent refresh, switch to a server-side session store (see references/frameworks/flask.md).
     if "access_token" in token:
         session["access_token"] = token["access_token"]
-    return redirect(session.pop("return_url", "/"))
+    return redirect(safe_return_url(session.pop("return_url", "/")))
 
 
 @bp.get("/api/me")

@@ -1,10 +1,11 @@
 """Security headers middleware — the Python analog of the .NET SecurityHeadersMiddleware.
 
-Adds CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy and
-Permissions-Policy to every response. The CSP defaults are intentionally generic
-('self'-only) so the baseline has no external dependencies; the value is read from
-``Settings.content_security_policy`` and can be overridden per-environment or extended
-by an auth skill.
+Adds CSP, HSTS, X-Frame-Options, X-Content-Type-Options, X-XSS-Protection,
+X-Permitted-Cross-Domain-Policies, Referrer-Policy and Permissions-Policy to every response.
+The CSP is a locked-down 'self'-only policy (see ``Settings.content_security_policy`` /
+``DEFAULT_CSP``) mirroring the .NET / Node baselines, and can be overridden per-environment or
+extended by an auth skill. Framing is intentionally stricter than .NET: ``X-Frame-Options: DENY``
+paired with ``frame-ancestors 'none'``.
 """
 
 from __future__ import annotations
@@ -28,6 +29,8 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         headers.setdefault("Content-Security-Policy", self._csp)
         headers.setdefault("X-Content-Type-Options", "nosniff")
         headers.setdefault("X-Frame-Options", "DENY")
+        headers.setdefault("X-XSS-Protection", "0")
+        headers.setdefault("X-Permitted-Cross-Domain-Policies", "none")
         headers.setdefault("Referrer-Policy", "no-referrer")
         headers.setdefault("Permissions-Policy", "geolocation=(), microphone=(), camera=()")
         if self._hsts:

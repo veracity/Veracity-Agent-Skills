@@ -241,6 +241,15 @@ await fastify.register(fastifySession, {
 > **Sign-out redirect (`LOGOUT_REDIRECT_URI`)** — `/signOut` reads the post-logout URL from
 > `LOGOUT_REDIRECT_URI`, falling back to `https://www.veracity.com/auth/logout`.
 
+> **Open-redirect guard (`safeReturnUrl`, CWE-601)** — the `returnUrl` accepted by
+> `/auth/challenge` is caller-supplied, so it must never be stored or redirected to without
+> validation. `safeRedirect.ts` exports `safeReturnUrl`, which returns a guaranteed
+> root-relative path and collapses any absolute, protocol-relative (`//host`),
+> backslash-obfuscated, or scheme-bearing value to `/`. Apply it when storing the value in
+> `/auth/challenge`, when consuming it in `/auth/callback` (defense-in-depth), and when the
+> `requireAuth` guard builds `/auth/challenge?returnUrl=`. The fixed `LOGOUT_REDIRECT_URI` is
+> not user input and is used as-is.
+
 > **Frontend contract — sign-in must target `/auth/challenge`, not `/auth`.** A common wiring
 > mistake is pointing the "Sign in" button at `/auth`. `GET /auth` is only a **status check**
 > that returns `{ result: boolean }` and never redirects — clicking it just shows

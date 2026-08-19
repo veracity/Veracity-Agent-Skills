@@ -56,6 +56,7 @@
         "GET /auth checked on app load via getAuthStatus()",
         "GET /api/me fetched only after /auth reports authenticated (anonymous users not force-redirected)",
         "Sign in performs full-page navigation to /auth/challenge?returnUrl= with a relative returnUrl",
+        "returnUrl is passed through toRelativeReturnUrl() (src/api/safeRedirect.ts) so an absolute/protocol-relative/backslash target collapses to a same-origin relative path (CWE-601 open redirect)",
         "Sign out performs full-page navigation to /signout (not fetch)",
         "401 from /api/me triggers a scoped redirect to /auth/challenge; there is NO global fetch interceptor",
         "fetch calls use credentials: 'include'"

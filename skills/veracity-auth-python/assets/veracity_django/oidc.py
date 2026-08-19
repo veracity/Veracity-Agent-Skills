@@ -22,6 +22,7 @@ from django.http import HttpResponseRedirect, JsonResponse
 from django.urls import reverse
 
 from veracity_core.constants import VERACITY_OIDC_METADATA_URL
+from veracity_core.redirects import safe_return_url
 from veracity_core.settings import Settings, get_settings
 
 oauth = OAuth()
@@ -50,7 +51,7 @@ def auth_status(request):
 
 def challenge(request):
     settings = get_settings()
-    request.session["return_url"] = request.GET.get("returnUrl", "/")
+    request.session["return_url"] = safe_return_url(request.GET.get("returnUrl", "/"))
     # Prefer the configured redirect URI (e.g. the Vite proxy origin the SPA runs on) so
     # B2C returns the browser to the same origin that holds the session cookie.
     redirect_uri = settings.redirect_uri or request.build_absolute_uri(
@@ -79,7 +80,7 @@ def callback(request):
         request.session["access_token"] = token["access_token"]
     if "refresh_token" in token:
         request.session["refresh_token"] = token["refresh_token"]
-    return HttpResponseRedirect(request.session.pop("return_url", "/"))
+    return HttpResponseRedirect(safe_return_url(request.session.pop("return_url", "/")))
 
 
 def me(request):

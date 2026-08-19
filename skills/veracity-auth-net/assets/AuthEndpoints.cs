@@ -25,9 +25,7 @@ public static class AuthEndpoints
 
         app.MapGet("/auth/challenge", (HttpContext context, string? returnUrl = null) =>
         {
-            var redirectUri = !string.IsNullOrEmpty(returnUrl) && Uri.IsWellFormedUriString(returnUrl, UriKind.Relative)
-                ? returnUrl
-                : "/";
+            var redirectUri = SafeRedirect.SanitizeReturnUrl(returnUrl);
 
             return Results.Challenge(
                 new AuthenticationProperties { RedirectUri = redirectUri },

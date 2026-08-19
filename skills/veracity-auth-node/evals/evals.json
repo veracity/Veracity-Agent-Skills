@@ -12,6 +12,7 @@
         "package.json includes express, @azure/msal-node, express-session, helmet, zod",
         "src/auth/msalClient.ts created (ConfidentialClientApplication)",
         "src/auth/authRoutes.ts created with /auth, /auth/challenge, /auth/callback, /api/me, /signOut",
+        "src/auth/safeRedirect.ts created; the returnUrl accepted by /auth/challenge is passed through safeReturnUrl before being stored and before /auth/callback redirects to it, so absolute/protocol-relative/backslash-obfuscated/scheme-bearing values collapse to a safe relative path (CWE-601 open redirect)",
         "Session cookie name uses __Host- prefix (e.g. __Host-veracity.session) with secure + path=/",
         "Unauthenticated /api/* returns 401 instead of redirecting (authMiddleware)",
         "env files contain B2C Production values (B2C_INSTANCE, B2C_DOMAIN, B2C_TENANT_ID, CLIENT_ID)",

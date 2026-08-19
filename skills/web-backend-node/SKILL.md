@@ -15,7 +15,7 @@ This skill creates a new **Express 5 + TypeScript** project with a production-se
 | Versioned API anchor | `src/routes/apiV1.ts` router mounted at `/api/v1` | `Asp.Versioning` versioned `apiGroup` |
 | Config / secrets | `dotenv` layering (`.env` → `.env.<NODE_ENV>` → `.env.local`) validated with `zod`, fail-fast | appsettings + `dotnet user-secrets` |
 | Health checks | `/health`, `/health/ready`, `/health/live` (all anonymous) | Health checks |
-| Security | `helmet` with generic `'self'`-only CSP directives | `SecurityHeadersMiddleware` + CSP section |
+| Security | `helmet` with an explicit locked-down CSP (`useDefaults:false`) matching the .NET policy | `SecurityHeadersMiddleware` + CSP section |
 | Error handling | Global error handler returning a ProblemDetails-style JSON body | Global `ProblemDetails` exception handler |
 | Request validation | `zod` (also validates env) | FluentValidation |
 | HTTPS local dev | Optional via `TLS_CERT_FILE` / `TLS_KEY_FILE` (mkcert) | HTTPS `launchSettings.json` |
@@ -23,7 +23,7 @@ This skill creates a new **Express 5 + TypeScript** project with a production-se
 
 It does **not** add authentication, authorization, cookies, OIDC, JWT, sessions, or any Veracity-specific packages or endpoints. The `/api/v1` router is **not** protected — protection is added later by an auth skill.
 
-> **CSP defaults are intentionally generic.** The scaffolded `app.ts` ships with `'self'`-only CSP sources so the baseline has no external dependencies. Auth skills (e.g. `veracity-auth-node`) extend the directives when they add their own CDN and login endpoints.
+> **CSP is explicit and locked down.** The scaffolded `app.ts` sets `helmet`'s CSP with `useDefaults: false` and an explicit directive set (`base-uri 'none'`, `default-src 'self'`, `script-src 'self'`, `style-src 'self'`, `frame-src 'none'`, `worker-src 'self' blob:`, etc.), so the baseline has no external dependencies. Auth skills (e.g. `veracity-auth-node`) extend the directives when they add their own CDN and login endpoints.
 
 ## Phase 1: Mode Detection
 

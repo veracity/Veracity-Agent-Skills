@@ -18,17 +18,22 @@ from typing import Literal
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-# Generic, 'self'-only Content-Security-Policy. The baseline has no external dependencies,
-# so nothing beyond the app's own origin is allowed. Auth skills extend these sources when
-# they add their own CDN / login endpoints.
+# Locked-down Content-Security-Policy mirroring the web-backend-net / web-backend-node baseline
+# (base-uri 'none', 'self'-only sources, no external hosts), with intentionally *stricter*
+# framing than .NET: frame-ancestors 'none' (paired with X-Frame-Options: DENY). Auth skills
+# extend these sources when they add their own CDN / login endpoints.
 DEFAULT_CSP = (
+    "base-uri 'none'; "
     "default-src 'self'; "
-    "img-src 'self' data:; "
-    "style-src 'self' 'unsafe-inline'; "
-    "script-src 'self'; "
     "connect-src 'self'; "
+    "script-src 'self'; "
+    "font-src 'self' data:; "
+    "media-src 'self'; "
+    "worker-src 'self' blob:; "
+    "img-src 'self' data:; "
+    "frame-src 'none'; "
+    "style-src 'self'; "
     "frame-ancestors 'none'; "
-    "base-uri 'self'; "
     "form-action 'self'"
 )
 

@@ -46,6 +46,12 @@ three frameworks.
    login redirect.
 5. **Tight clock skew** — JWT validation uses a 60-second leeway (matching the .NET skill),
    tighter than common defaults.
+6. **Validated redirects (open redirect)** — For the OIDC BFF, the `returnUrl` accepted by
+   `/auth/challenge` is caller-supplied and must never drive a redirect without validation. It is
+   passed through `safe_return_url` (`veracity_core/redirects.py`) before being stored in the
+   session and again before the `/auth/callback` redirect, collapsing any absolute,
+   protocol-relative (`//host`), backslash-obfuscated, or scheme-bearing value to a safe relative
+   path (CWE-601). The fixed `logout_redirect_uri` is not user input and is used as-is.
 
 ## Prerequisites — Veracity App Registration
 
@@ -294,7 +300,7 @@ copy `assets/veracity_core/` and the matching adapter package (`assets/veracity_
 | `assets/pyproject.toml` | `src/{project-slug}-{web|api}/pyproject.toml` | Core deps (authlib, msal, pyjwt[crypto], httpx, pydantic-settings) + per-framework extras (`fastapi` / `flask` / `django`) + dev tools; update `[project].name` |
 | `assets/.env.example` | `src/{project-slug}-{web|api}/.env.example` | Local config template (copy to `.env`, gitignored) |
 | `assets/.gitignore` | `src/{project-slug}-{web|api}/.gitignore` | Ignores `.env`, venv, caches |
-| `assets/veracity_core/` | `src/{project-slug}-{web|api}/veracity_core/` | **Framework-agnostic core**: constants, pydantic-settings, PyJWT validation (+ bearer/AuthError), MSAL OBO/client-credentials, httpx API-client auth, Veracity API proxy helpers (`proxy.py`) |
+| `assets/veracity_core/` | `src/{project-slug}-{web|api}/veracity_core/` | **Framework-agnostic core**: constants, pydantic-settings, PyJWT validation (+ bearer/AuthError), MSAL OBO/client-credentials, httpx API-client auth, Veracity API proxy helpers (`proxy.py`), open-redirect guard (`redirects.py`, `safe_return_url`) |
 | `assets/app/settings.py` | `src/{project-slug}-{web|api}/app/settings.py` | Re-exports `veracity_core.settings` + constants (back-compat shim) |
 | `assets/app/security_headers.py` | `src/{project-slug}-{web|api}/app/security_headers.py` | CSP/HSTS security-headers middleware |
 | `assets/app/health.py` | `src/{project-slug}-{web|api}/app/health.py` | Anonymous health endpoints |
