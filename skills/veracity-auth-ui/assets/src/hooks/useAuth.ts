@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 
 import { CurrentUser, getAuthStatus, getCurrentUser, signIn, signOut } from '../api/auth'
-import { isAllowedRedirect } from '../api/safeRedirect'
+import { sanitizeRedirectUrl } from '../api/safeRedirect'
 import { validatePolicy } from '../api/veracity'
 
 export interface UseAuthOptions {
@@ -45,12 +45,15 @@ export function useAuth({ enablePolicyCheck = false }: UseAuthOptions = {}): Use
         if (enablePolicyCheck && me) {
           const policy = await validatePolicy()
           if (!active) return
-          if (policy && !policy.compliant && policy.redirectUrl && isAllowedRedirect(policy.redirectUrl)) {
+          // Sanitize the response-supplied redirect: navigate ONLY to the validated,
+          // re-serialized URL string (never the raw policy.redirectUrl), so a
+          // javascript:/data: URI cannot execute (CWE-80 XSS) and off-site targets are
+          // blocked (CWE-601 open redirect).
+          const safeRedirectUrl = policy?.redirectUrl ? sanitizeRedirectUrl(policy.redirectUrl) : null
+          if (policy && !policy.compliant && safeRedirectUrl) {
             // Full-page navigation so the user lands on the Veracity policy /
-            // subscription page; the app resumes once they return compliant. The
-            // redirect target is validated against an allow-list of approved
-            // Veracity domains first (open-redirect guard, CWE-601).
-            window.location.href = policy.redirectUrl
+            // subscription page; the app resumes once they return compliant.
+            window.location.href = safeRedirectUrl
             return
           }
         }
