@@ -58,21 +58,20 @@ public static class VeracityV4Endpoints
                 {
                     case 406:
                         logger.LogInformation(ex, "Veracity API V4 returned 406 (policy not accepted) for GET /me/policy-verification");
-                        string? url = null;
-                        if (!string.IsNullOrEmpty(ex.ErrorData))
+                        return Results.Json(new V4PolicyResponse(false, TryGetRedirectUrl(ex.ErrorData, logger)), statusCode: 406);
+                    case 403:
+                        // A 403 from the downstream API can carry a redirect URL in its error detail
+                        // (e.g. the user must accept terms / complete a subscription step). When a redirect
+                        // URL is present, surface it as a 406 so the client can redirect the user; otherwise
+                        // the 403 is a genuine authorization failure and is returned as-is.
+                        var redirectUrl = TryGetRedirectUrl(ex.ErrorData, logger);
+                        if (!string.IsNullOrEmpty(redirectUrl))
                         {
-                            try
-                            {
-                                var body = JsonSerializer.Deserialize<JsonElement>(ex.ErrorData);
-                                url = body.TryGetProperty("url", out var u) ? u.GetString()
-                                    : body.TryGetProperty("information", out var info) ? info.GetString() : null;
-                            }
-                            catch (JsonException jsonEx)
-                            {
-                                logger.LogWarning(jsonEx, "Failed to parse 406 policy response body");
-                            }
+                            logger.LogInformation(ex, "Veracity API V4 returned 403 with a redirect URL for GET /me/policy-verification; returning 406");
+                            return Results.Json(new V4PolicyResponse(false, redirectUrl), statusCode: 406);
                         }
-                        return Results.Json(new V4PolicyResponse(false, url), statusCode: 406);
+                        logger.LogWarning(ex, "Veracity API V4 returned 403 without a redirect URL for GET /me/policy-verification");
+                        return Results.Json(new V4PolicyResponse(false, null), statusCode: 403);
                     default:
                         logger.LogError(ex, "Veracity API V4 returned unexpected {StatusCode} for GET /me/policy-verification", ex.Status);
                         throw;
@@ -87,7 +86,9 @@ public static class VeracityV4Endpoints
         .Produces<V4PolicyResponse>(200)
         .Produces(401)
         .Produces(400)
+        .Produces<V4PolicyResponse>(403)
         .Produces(404)
+        .Produces<V4PolicyResponse>(406)
         .Produces(500)
         .Produces(502);
 
@@ -104,6 +105,34 @@ public static class VeracityV4Endpoints
         .Produces(404)
         .Produces(500)
         .Produces(502);
+    }
+
+    // Extracts a redirect/information URL from a downstream Veracity API error body, if present.
+    private static string? TryGetRedirectUrl(string? errorData, ILogger logger)
+    {
+        if (string.IsNullOrEmpty(errorData))
+        {
+            return null;
+        }
+
+        try
+        {
+            var body = JsonSerializer.Deserialize<JsonElement>(errorData);
+            if (body.ValueKind != JsonValueKind.Object)
+            {
+                return null;
+            }
+
+            return body.TryGetProperty("url", out var u) ? u.GetString()
+                : body.TryGetProperty("redirectUrl", out var r) ? r.GetString()
+                : body.TryGetProperty("information", out var info) ? info.GetString()
+                : null;
+        }
+        catch (JsonException jsonEx)
+        {
+            logger.LogWarning(jsonEx, "Failed to parse Veracity API V4 policy error response body");
+            return null;
+        }
     }
 }
 

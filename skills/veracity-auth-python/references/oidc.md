@@ -200,9 +200,11 @@ The OIDC metadata URL, authority, and JWKS URI are derived from Instance/Domain/
 - **`mismatching_state` on callback** — the session cookie didn't round-trip. Ensure
   `SessionMiddleware` is registered, `same_site="lax"`, `COOKIE_SECURE=true`, and the app is being
   served through the configured HTTPS certificate.
-- **HTTPS certs missing at startup** — `veracity-dev` fails fast if `HTTPS_CERT_FILE` or
-  `HTTPS_KEY_FILE` is missing. Generate the localhost cert/key pair (for example with `mkcert`) and
-  keep the paths in `.env` aligned with the generated files.
+- **HTTPS certs missing at startup** — `veracity-dev` auto-generates the localhost cert/key at the
+  `HTTPS_CERT_FILE` / `HTTPS_KEY_FILE` paths on first run (mkcert when available, self-signed
+  `cryptography` fallback otherwise). If generation fails (for example a broken `mkcert` install),
+  run `uv run veracity-dev-cert --force` or fix the `.env` paths so they point at writable
+  locations.
 - **Redirect URI mismatch from B2C** — add the exact callback URL to the app registration's reply
   URLs: `https://<host>/auth/callback` (default `https://localhost:54438/auth/callback`), or, when a
   veracity-auth-ui SPA fronts the BFF, the Vite proxy URL set in `REDIRECT_URI`

@@ -14,12 +14,12 @@ def build_uvicorn_kwargs(settings: Settings | None = None) -> dict[str, object]:
 
     cert_file = Path(settings.https_cert_file)
     key_file = Path(settings.https_key_file)
-    missing = [str(path) for path in (cert_file, key_file) if not path.is_file()]
-    if missing:
-        raise RuntimeError(
-            "Local HTTPS requires HTTPS_CERT_FILE and HTTPS_KEY_FILE to point to existing files. "
-            "Generate a trusted localhost certificate (for example with mkcert) and update .env."
-        )
+    if not (cert_file.is_file() and key_file.is_file()):
+        # Auto-generate the localhost cert/key (mkcert when available, otherwise a
+        # self-signed pair) so `veracity-dev` works without a manual setup step.
+        from scripts.generate_dev_cert import ensure_dev_cert
+
+        cert_file, key_file = ensure_dev_cert(settings)
 
     return {
         "app": "app.main:app",

@@ -58,19 +58,22 @@ When applying this skill:
    `src/{project-slug}-api` for JWT).
 2. Copy `.env.example` to `.env`.
 3. Generate a strong `SESSION_SECRET` for OIDC projects and write it into `.env`.
-4. Generate the local cert/key pair inside the project folder, under paths that match
-   `HTTPS_CERT_FILE` / `HTTPS_KEY_FILE` in `.env` (default: `.certs/localhost.pem` and
-   `.certs/localhost-key.pem`).
-5. Prefer `mkcert` when available because it creates a trusted localhost certificate. If `mkcert`
-   is unavailable, generate a self-signed localhost certificate/key pair with an ecosystem tool
-   such as OpenSSL and keep the `.env` paths aligned with the generated files.
+4. The local cert/key pair is generated **automatically**: the `veracity-dev` launcher calls
+   `scripts/generate_dev_cert.py` on startup when the files at `HTTPS_CERT_FILE` / `HTTPS_KEY_FILE`
+   are missing (default: `.certs/localhost.pem` and `.certs/localhost-key.pem`). You can also run it
+   ahead of time with `uv run veracity-dev-cert`. No manual `mkcert` step or `.env` editing is
+   required — the paths already match `.env.example`.
+5. The generator prefers `mkcert` when it is on `PATH` because it produces a certificate trusted by
+   the OS/browser. When `mkcert` is unavailable it falls back to a self-signed localhost
+   certificate/key pair generated with the `cryptography` library (already a dependency), so local
+   HTTPS works with no extra tooling to install.
 
 ```bash
 cd src/{project-slug}-{web|api}
 Copy-Item .env.example .env     # Windows PowerShell (or: cp .env.example .env)
-# generate SESSION_SECRET for OIDC, generate the localhost cert/key pair, then
-# edit .env: set CLIENT_ID / JWT_AUDIENCE and any remaining user-managed secret values
-uv run veracity-dev
+# generate SESSION_SECRET for OIDC, then edit .env: set CLIENT_ID / JWT_AUDIENCE and any
+# remaining user-managed secret values. The localhost cert/key is created automatically.
+uv run veracity-dev            # generates .certs/localhost*.pem on first run, then serves HTTPS
 ```
 
 Default local URL: `https://localhost:54438`.

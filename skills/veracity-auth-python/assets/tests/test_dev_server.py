@@ -1,7 +1,5 @@
-from pathlib import Path
 import sys
-
-import pytest
+from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -32,11 +30,40 @@ def test_build_uvicorn_kwargs_uses_https_files(tmp_path: Path):
     assert kwargs["ssl_keyfile"] == str(key)
 
 
-def test_build_uvicorn_kwargs_requires_existing_certificates():
+def test_build_uvicorn_kwargs_autogenerates_missing_certificates(tmp_path: Path):
+    cert = tmp_path / ".certs" / "localhost.pem"
+    key = tmp_path / ".certs" / "localhost-key.pem"
     settings = Settings(
-        https_cert_file=".certs/missing-cert.pem",
-        https_key_file=".certs/missing-key.pem",
+        auth_strategy="jwt",
+        https_cert_file=str(cert),
+        https_key_file=str(key),
     )
 
-    with pytest.raises(RuntimeError, match="Local HTTPS requires HTTPS_CERT_FILE and HTTPS_KEY_FILE"):
-        build_uvicorn_kwargs(settings)
+    kwargs = build_uvicorn_kwargs(settings)
+
+    # The dev launcher self-heals by generating the cert/key instead of erroring.
+    assert cert.is_file()
+    assert key.is_file()
+    assert kwargs["ssl_certfile"] == str(cert)
+    assert kwargs["ssl_keyfile"] == str(key)
+
+
+def test_ensure_dev_cert_generates_valid_pem(tmp_path: Path):
+    from cryptography import x509
+
+    from scripts.generate_dev_cert import ensure_dev_cert
+
+    cert = tmp_path / ".certs" / "localhost.pem"
+    key = tmp_path / ".certs" / "localhost-key.pem"
+    settings = Settings(auth_strategy="jwt", https_cert_file=str(cert), https_key_file=str(key))
+
+    cert_path, key_path = ensure_dev_cert(settings)
+
+    assert cert_path.is_file() and key_path.is_file()
+    # Parses as a real certificate regardless of whether mkcert or the fallback ran.
+    x509.load_pem_x509_certificate(cert_path.read_bytes())
+
+    # Idempotent: a second call leaves the existing files untouched.
+    first = cert_path.read_bytes()
+    ensure_dev_cert(settings)
+    assert cert_path.read_bytes() == first

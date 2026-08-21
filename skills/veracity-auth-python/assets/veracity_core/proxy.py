@@ -82,13 +82,13 @@ def get_my_applications(settings: Settings, user_access_token: str):
 
 
 def _parse_policy_redirect(resp: httpx.Response) -> str | None:
-    """Extract the policy-acceptance URL from a 406 response body (``url``/``information``)."""
+    """Extract the policy-acceptance URL from a response body (``url``/``redirectUrl``/``information``)."""
     try:
         body = resp.json()
     except ValueError:
         return None
     if isinstance(body, dict):
-        return body.get("url") or body.get("information")
+        return body.get("url") or body.get("redirectUrl") or body.get("information")
     return None
 
 
@@ -99,15 +99,22 @@ def _require_service_id(settings: Settings) -> str:
     return settings.service_id
 
 
-def _policy_result(resp: httpx.Response) -> dict:
+def _policy_result(resp: httpx.Response, *, redirect_on_403: bool = False) -> dict:
     """Translate a policy-validation response into ``{compliant, redirectUrl}``.
 
     A ``2xx`` (V4 ``200`` / V3 ``204``) means compliant; a ``406`` means the user must accept a
-    policy or lacks a subscription and should be redirected to ``redirectUrl``. Anything else is
-    surfaced as a :class:`VeracityApiError`.
+    policy or lacks a subscription and should be redirected to ``redirectUrl``. When
+    ``redirect_on_403`` is set, a ``403`` carrying a redirect URL in its error detail is treated the
+    same as a ``406`` (surfaced as non-compliant with a ``redirectUrl``) so the client can redirect
+    the user; a ``403`` without a redirect URL remains a genuine authorization failure. Anything
+    else is surfaced as a :class:`VeracityApiError`.
     """
     if resp.status_code == 406:
         return {"compliant": False, "redirectUrl": _parse_policy_redirect(resp)}
+    if redirect_on_403 and resp.status_code == 403:
+        redirect_url = _parse_policy_redirect(resp)
+        if redirect_url:
+            return {"compliant": False, "redirectUrl": redirect_url}
     if resp.is_success:
         return {"compliant": True, "redirectUrl": None}
     raise VeracityApiError(resp.status_code, resp.text)
@@ -121,8 +128,9 @@ def validate_policy_v4(settings: Settings, user_access_token: str, return_url: s
     application. Calls ``POST /me/policy-verifications/{serviceId}?return-url=...``.
 
     Returns ``{"compliant": True, "redirectUrl": None}`` when the user is compliant, or
-    ``{"compliant": False, "redirectUrl": <url>}`` when the API responds ``406``. A missing
-    ``service_id`` or any other upstream failure raises :class:`VeracityApiError`.
+    ``{"compliant": False, "redirectUrl": <url>}`` when the API responds ``406`` (or ``403`` with a
+    redirect URL in its error detail). A ``403`` without a redirect URL, a missing ``service_id``,
+    or any other upstream failure raises :class:`VeracityApiError`.
     """
     service_id = _require_service_id(settings)
     client = make_v4_client(settings, _static_token_provider(user_access_token))
@@ -132,7 +140,7 @@ def validate_policy_v4(settings: Settings, user_access_token: str, return_url: s
             resp = c.post(path, params={"return-url": return_url})
     except httpx.HTTPError as exc:
         raise VeracityApiError(502, str(exc)) from exc
-    return _policy_result(resp)
+    return _policy_result(resp, redirect_on_403=True)
 
 
 def validate_policy_v3(settings: Settings, user_access_token: str, return_url: str) -> dict:

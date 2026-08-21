@@ -12,6 +12,9 @@ dependencies = [
     "httpx>=0.27",
     "msal>=1.28",
     "pyjwt[crypto]>=2.8",
+    # Used by scripts/generate_dev_cert.py for the self-signed localhost fallback when
+    # mkcert isn't available (already pulled in transitively via pyjwt[crypto]).
+    "cryptography>=42.0",
 ]
 
 [project.optional-dependencies]
@@ -45,6 +48,9 @@ dev = [
 [project.scripts]
 # FastAPI HTTPS-first local dev launcher (see references/frameworks/fastapi.md).
 veracity-dev = "app.dev_server:main"
+# Generate/refresh the local HTTPS cert/key pair (mkcert when available, self-signed
+# fallback otherwise). Runs automatically from the dev launchers; exposed for manual use.
+veracity-dev-cert = "scripts.generate_dev_cert:main"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
@@ -62,4 +68,4 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 # Shared core + one package per framework. A real integration copies veracity_core plus
 # the single adapter package for its framework.
-packages = ["veracity_core", "app", "veracity_flask", "veracity_django"]
+packages = ["veracity_core", "app", "veracity_flask", "veracity_django", "scripts"]

@@ -67,6 +67,19 @@ export class VeracityV4Controller {
         .json({ compliant: false, redirectUrl: await this.veracity.parsePolicyRedirect(upstream) });
       return;
     }
+    // A 403 from the downstream API can carry a redirect URL in its error detail (e.g. the user
+    // must accept terms or complete a subscription step). When a redirect URL is present, surface
+    // it as a 406 so the client can redirect the user; otherwise it is a genuine authorization
+    // failure and is returned as 403.
+    if (upstream.status === 403) {
+      const redirectUrl = await this.veracity.parsePolicyRedirect(upstream);
+      if (redirectUrl) {
+        res.status(406).json({ compliant: false, redirectUrl });
+        return;
+      }
+      res.status(403).json({ compliant: false, redirectUrl: null });
+      return;
+    }
     res.status(upstream.ok ? 200 : upstream.status).json({ compliant: upstream.ok, redirectUrl: null });
   }
 

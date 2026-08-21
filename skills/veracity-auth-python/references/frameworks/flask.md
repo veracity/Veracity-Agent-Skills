@@ -97,12 +97,13 @@ runner:
 
 ```python
 from veracity_flask.dev_https import run_dev
-run_dev(app)   # requires HTTPS_CERT_FILE / HTTPS_KEY_FILE in .env
+run_dev(app)   # auto-generates the localhost cert/key if missing, then serves HTTPS
 ```
 
-Generate a localhost cert/key pair (prefer `mkcert`) and point `HTTPS_CERT_FILE` / `HTTPS_KEY_FILE`
-at them. Default callback URL: `https://localhost:54438/auth/callback`. In production run behind
-gunicorn/uwsgi with TLS terminated at a reverse proxy.
+`run_dev` calls `scripts/generate_dev_cert.py` on startup when `HTTPS_CERT_FILE` / `HTTPS_KEY_FILE`
+are missing (mkcert when available, self-signed `cryptography` fallback otherwise), so no manual
+`mkcert` step is needed. Default callback URL: `https://localhost:54438/auth/callback`. In
+production run behind gunicorn/uwsgi with TLS terminated at a reverse proxy.
 
 ## Downstream Veracity API (OBO)
 

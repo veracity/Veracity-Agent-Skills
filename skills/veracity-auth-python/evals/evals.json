@@ -24,7 +24,7 @@
         "User guided to set CLIENT_SECRET in .env, not asked to paste it in chat",
         "A strong SESSION_SECRET is generated into the local .env by the skill",
         "settings.py session_secret has NO hard-coded default and is required/validated (>=32 chars) for OIDC; app fails fast if missing (CWE-259)",
-        "Local HTTPS cert and key files are generated in the project and wired into .env",
+        "Local HTTPS cert and key files are generated automatically (via scripts/generate_dev_cert.py, invoked by the dev launcher or veracity-dev-cert) at the .env cert/key paths, with no manual mkcert step",
         "User asked for the Client ID (GUID, non-secret)"
       ]
     },
