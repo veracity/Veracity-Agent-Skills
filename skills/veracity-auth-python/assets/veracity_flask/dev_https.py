@@ -18,13 +18,12 @@ def run_dev(app: Flask, settings: Settings | None = None) -> None:
     settings = settings or get_settings()
     cert_file = Path(settings.https_cert_file)
     key_file = Path(settings.https_key_file)
-    missing = [str(p) for p in (cert_file, key_file) if not p.is_file()]
-    if missing:
-        raise RuntimeError(
-            "Local HTTPS requires HTTPS_CERT_FILE and HTTPS_KEY_FILE to point to existing "
-            "files. Generate a trusted localhost certificate (for example with mkcert) and "
-            "update .env."
-        )
+    if not (cert_file.is_file() and key_file.is_file()):
+        # Auto-generate the localhost cert/key (mkcert when available, otherwise a
+        # self-signed pair) so `run_dev` works without a manual setup step.
+        from scripts.generate_dev_cert import ensure_dev_cert
+
+        cert_file, key_file = ensure_dev_cert(settings)
     app.run(
         host=settings.app_host,
         port=settings.app_port,

@@ -229,8 +229,10 @@ by the **`web-backend-python`** skill. Do not hand-write it here.
    (OIDC) or `{project-slug}-api` (JWT).
 6. Merge Veracity keys into `.env`: fill selected non-secret values, generate a strong
    `SESSION_SECRET` for OIDC projects, and keep secret placeholders only for values the user must
-   supply later (for example `CLIENT_SECRET`, `SUBSCRIPTION_KEY`). The baseline already generated the
-   local HTTPS cert/key and wired `HTTPS_CERT_FILE` / `HTTPS_KEY_FILE`; keep HTTPS-first local dev.
+   supply later (for example `CLIENT_SECRET`, `SUBSCRIPTION_KEY`). The baseline already wired
+   `HTTPS_CERT_FILE` / `HTTPS_KEY_FILE`; the local HTTPS cert/key is generated automatically on the
+   first `uv run veracity-dev` (or manually via `uv run veracity-dev-cert`), so no manual `mkcert`
+   step is needed. Keep HTTPS-first local dev.
 
 > **Self-contained reference**: The `assets/` in this skill include working `app/health.py`,
 > `app/main.py`, `app/dev_server.py`, and `app/settings.py` so the bundled pytest suite runs
@@ -275,8 +277,9 @@ V4 project that generates `v4/policy/validate`; omit it entirely for V3-only pro
 - From the resolved project directory, run `uv run pytest` — the bundled suites cover health,
   security headers, JWT accept/reject (valid / missing / expired / wrong audience / wrong issuer),
   OIDC anonymous status, the `/api/me` 401, and API-client header injection.
-- From the resolved project directory, run `uv run veracity-dev` with the generated local HTTPS
-  certs and open `https://localhost:54438/docs`.
+- From the resolved project directory, run `uv run veracity-dev` and open
+  `https://localhost:54438/docs`. The launcher auto-generates the local HTTPS cert/key on first run
+  (mkcert when available, self-signed fallback otherwise) — no manual `mkcert` step required.
 - **OIDC:** `GET /auth` → `{"result": false}`; `GET /api/me` → `401`;
   `GET /auth/challenge` → `302` to `login.veracity.com/.../oauth2/v2.0/authorize` with
   `response_type=code` and the configured scopes (proves live B2C discovery).
@@ -305,7 +308,8 @@ copy `assets/veracity_core/` and the matching adapter package (`assets/veracity_
 | `assets/app/security_headers.py` | `src/{project-slug}-{web|api}/app/security_headers.py` | CSP/HSTS security-headers middleware |
 | `assets/app/health.py` | `src/{project-slug}-{web|api}/app/health.py` | Anonymous health endpoints |
 | `assets/app/main.py` | `src/{project-slug}-{web|api}/app/main.py` | App factory; wires the chosen strategy |
-| `assets/app/dev_server.py` | `src/{project-slug}-{web|api}/app/dev_server.py` | HTTPS-first local Uvicorn launcher driven by `.env` cert/key settings |
+| `assets/app/dev_server.py` | `src/{project-slug}-{web|api}/app/dev_server.py` | HTTPS-first local Uvicorn launcher driven by `.env` cert/key settings; auto-generates the localhost cert/key on first run if missing |
+| `assets/scripts/generate_dev_cert.py` | `src/{project-slug}-{web|api}/scripts/generate_dev_cert.py` | Auto-generates the local HTTPS cert/key at the `.env` paths (mkcert when available, self-signed `cryptography` fallback otherwise). Called automatically by the dev launchers; also exposed as the `veracity-dev-cert` script |
 | `assets/app/auth/oidc.py` | `src/{project-slug}-web/app/auth/oidc.py` | FastAPI Authlib BFF: `/auth`, `/auth/challenge`, `/auth/callback`, `/api/me`, `/signout` (SPA-matching paths) |
 | `assets/app/auth/jwt.py` | `src/{project-slug}-api/app/auth/jwt.py` | FastAPI `require_user` dependency over `veracity_core.tokens` |
 | `assets/app/veracity/routes.py` | `src/{project-slug}-web/app/veracity/routes.py` | FastAPI Veracity API proxy router (`/api/v1/veracity/v3/services` + `v3/policy/validate`, or `v4/me/applications` + `v4/policy/validate` — keep the chosen version) consumed by veracity-auth-ui |

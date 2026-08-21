@@ -134,7 +134,17 @@ path — see `references/jwt.md`.
 ## Local HTTPS development
 
 OIDC needs HTTPS locally (secure session cookie + exact callback URL). Use `django-extensions`
-`runserver_plus`, pointing at a localhost cert/key pair (prefer `mkcert`).
+`runserver_plus`, pointing at a localhost cert/key pair.
+
+Generate the cert/key **automatically** with the bundled script before starting the server (it is
+idempotent — a no-op when the files already exist):
+
+```bash
+uv run veracity-dev-cert   # creates .certs/localhost.pem + .certs/localhost-key.pem
+```
+
+The script prefers `mkcert` (trusted cert) when it is on `PATH` and otherwise falls back to a
+self-signed localhost pair via the `cryptography` library, so no manual `mkcert` step is required.
 
 **Prerequisites** — `django-extensions`, `Werkzeug`, and `pyOpenSSL` must be installed **and** `"django_extensions"` must be in `INSTALLED_APPS`. Without `django_extensions` in `INSTALLED_APPS`, Django will report `Unknown command: 'runserver_plus'`; without `pyOpenSSL`, it will report `Python OpenSSL Library is required`:
 

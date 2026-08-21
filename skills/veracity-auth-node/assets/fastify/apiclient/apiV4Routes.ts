@@ -53,6 +53,19 @@ export const apiV4Routes: FastifyPluginAsync = async (fastify: FastifyInstance) 
         .send({ compliant: false, redirectUrl: await parsePolicyRedirect(upstream) });
       return;
     }
+    // A 403 from the downstream API can carry a redirect URL in its error detail (e.g. the user
+    // must accept terms or complete a subscription step). When a redirect URL is present, surface
+    // it as a 406 so the client can redirect the user; otherwise it is a genuine authorization
+    // failure and is returned as 403.
+    if (upstream.status === 403) {
+      const redirectUrl = await parsePolicyRedirect(upstream);
+      if (redirectUrl) {
+        await reply.code(406).send({ compliant: false, redirectUrl });
+        return;
+      }
+      await reply.code(403).send({ compliant: false, redirectUrl: null });
+      return;
+    }
     await reply
       .code(upstream.ok ? 200 : upstream.status)
       .send({ compliant: upstream.ok, redirectUrl: null });

@@ -170,3 +170,63 @@ def test_django_policy_validate(monkeypatch):
         not_ok = client.get(path)
         assert not_ok.status_code == 406
         assert not_ok.json() == {"compliant": False, "redirectUrl": "https://accept"}
+
+
+# --- Policy result translation (proxy helper) --------------------------------
+def test_policy_result_403_with_redirect_is_treated_as_406():
+    import httpx
+
+    from veracity_core.proxy import _policy_result
+
+    resp = httpx.Response(status_code=403, json={"url": "https://accept"})
+    assert _policy_result(resp, redirect_on_403=True) == {
+        "compliant": False,
+        "redirectUrl": "https://accept",
+    }
+
+
+def test_policy_result_403_without_redirect_raises():
+    import httpx
+    import pytest
+
+    from veracity_core.proxy import VeracityApiError, _policy_result
+
+    resp = httpx.Response(status_code=403, json={"message": "forbidden"})
+    with pytest.raises(VeracityApiError) as exc_info:
+        _policy_result(resp, redirect_on_403=True)
+    assert exc_info.value.status_code == 403
+
+
+def test_policy_result_403_not_redirected_without_opt_in():
+    import httpx
+    import pytest
+
+    from veracity_core.proxy import VeracityApiError, _policy_result
+
+    resp = httpx.Response(status_code=403, json={"url": "https://accept"})
+    with pytest.raises(VeracityApiError) as exc_info:
+        _policy_result(resp)
+    assert exc_info.value.status_code == 403
+
+
+def test_validate_policy_v4_maps_403_redirect(monkeypatch):
+    import httpx
+
+    from veracity_core import proxy
+
+    class _FakeClient:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+        def post(self, path, params=None):
+            return httpx.Response(status_code=403, json={"redirectUrl": "https://accept"})
+
+    monkeypatch.setattr(proxy, "make_v4_client", lambda s, p: _FakeClient())
+    settings = Settings(auth_strategy="oidc", cookie_secure=False, service_id="svc-1")
+    assert proxy.validate_policy_v4(settings, "token", "https://app") == {
+        "compliant": False,
+        "redirectUrl": "https://accept",
+    }

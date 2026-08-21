@@ -142,7 +142,7 @@ Only include the V3 and/or V4 lines that match the user's choice.
   |----------|---------------|-------------|
   | `GET /api/v1/veracity/v4/me/applications` | `/me/applications` | Applications licensed to the user |
   | `GET /api/v1/veracity/v4/me/tenants` | `/me/tenants` | Tenants the current user belongs to |
-  | `GET /api/v1/veracity/v4/policy/validate` | `POST /me/policy-verifications/{VERACITY_SERVICE_ID}` | Service id read from config; on `406` returns `{ compliant: false, redirectUrl }` |
+  | `GET /api/v1/veracity/v4/policy/validate` | `POST /me/policy-verifications/{VERACITY_SERVICE_ID}` | Service id read from config; on `406` (or `403` carrying a redirect URL) returns `{ compliant: false, redirectUrl }`; a `403` without a redirect URL is relayed as `403` |
   | `GET /api/v1/veracity/v4/tenants/{tenantId}/applications` | `/tenants/{tenantId}/applications` | Applications for a tenant |
 
   All adapters use the shared `veracityApiFetch` + `parsePolicyRedirect` helpers plus a

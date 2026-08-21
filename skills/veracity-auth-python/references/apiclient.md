@@ -81,7 +81,7 @@ adapter (FastAPI `app/veracity/routes.py`, Flask `veracity_flask/veracity_api.py
 | `GET /api/v1/veracity/v3/services` | `get_my_services` | `GET /my/services` | User's services (V3) |
 | `GET /api/v1/veracity/v3/policy/validate` | `validate_policy_v3` | `GET /my/policies/validate()` | Veracity-wide check (no service id); returns `{compliant, redirectUrl}`; HTTP `406` when a policy/subscription is outstanding (V3) |
 | `GET /api/v1/veracity/v4/me/applications` | `get_my_applications` | `GET /me/applications` | User's applications (V4) |
-| `GET /api/v1/veracity/v4/policy/validate` | `validate_policy_v4` | `POST /me/policy-verifications/{SERVICE_ID}` | Service-specific check; returns `{compliant, redirectUrl}`; HTTP `406` when a policy/subscription is outstanding (V4) |
+| `GET /api/v1/veracity/v4/policy/validate` | `validate_policy_v4` | `POST /me/policy-verifications/{SERVICE_ID}` | Service-specific check; returns `{compliant, redirectUrl}`; HTTP `406` (or `403` carrying a redirect URL) when a policy/subscription is outstanding — a `403` without a redirect URL is relayed as `403` (V4) |
 
 > Generate **only** the endpoints for the API version the user chose (V3 **or** V4). Both
 > `policy/validate` variants validate the signed-in user's policies, but differ in scope: **V4** is
