@@ -124,7 +124,7 @@ The build must compile with no TypeScript errors. Start the app (`npm run dev`) 
 
 ## HTTPS for Local Dev (optional)
 
-`server.ts` serves HTTPS when `TLS_CERT_FILE` / `TLS_KEY_FILE` are set, otherwise plain HTTP. Generate a localhost cert with `mkcert -install && mkcert localhost` and point the env vars at it. Plain HTTP is fine when the app sits behind an HTTPS dev proxy (e.g. a Vite frontend).
+`server.ts` serves HTTPS when `TLS_CERT_FILE` / `TLS_KEY_FILE` are set, otherwise plain HTTP. To use HTTPS locally, the developer generates a trusted localhost cert themselves — for example with a tool such as [`mkcert`](https://github.com/FiloSottile/mkcert) (trusting the cert is a one-time manual machine setup you run outside this skill) — and points the env vars at the resulting files. Plain HTTP is fine when the app sits behind an HTTPS dev proxy (e.g. a Vite frontend).
 
 ## Rate Limiting (optional — only when explicitly requested)
 
