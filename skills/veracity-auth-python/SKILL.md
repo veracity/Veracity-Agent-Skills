@@ -227,8 +227,10 @@ by the **`web-backend-python`** skill. Do not hand-write it here.
 5. Merge Veracity dependencies into `pyproject.toml` (`authlib`, `msal`, `pyjwt[crypto]`, `httpx`,
    `itsdangerous`; keep the FastAPI extra). Update `[project].name` to `{project-slug}-web`
    (OIDC) or `{project-slug}-api` (JWT).
-6. Merge Veracity keys into `.env`: fill selected non-secret values, generate a strong
-   `SESSION_SECRET` for OIDC projects, and keep secret placeholders only for values the user must
+6. Merge Veracity keys into `.env`: fill selected non-secret values, and for OIDC projects
+   generate a strong `SESSION_SECRET` by running a command that writes it **directly** into `.env`
+   (never emit or print the value yourself — see `references/config-and-secrets.md`), and keep
+   secret placeholders only for values the user must
    supply later (for example `CLIENT_SECRET`, `SUBSCRIPTION_KEY`). The baseline already wired
    `HTTPS_CERT_FILE` / `HTTPS_KEY_FILE`; the local HTTPS cert/key is generated automatically on the
    first `uv run veracity-dev` (or manually via `uv run veracity-dev-cert`), so no manual `mkcert`

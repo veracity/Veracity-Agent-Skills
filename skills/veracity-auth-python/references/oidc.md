@@ -44,8 +44,9 @@ under your app's Settings page (labelled 'App / Api ID')."*
 
 The **Client Secret** is a secret the user sets in `.env` themselves (see
 `config-and-secrets.md`); never ask for the value in chat. The **Session Secret** is also a
-secret, but when applying this skill you should generate a strong local value and write it to
-`.env` instead of asking the user to provide one.
+secret, but when applying this skill you should generate a strong local value by running a command
+that writes it **directly** into `.env` (never emit or print the value yourself — see the exact
+command in `config-and-secrets.md`) instead of asking the user to provide one.
 
 ## Project structure
 

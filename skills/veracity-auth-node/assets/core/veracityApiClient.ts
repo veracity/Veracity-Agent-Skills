@@ -126,17 +126,39 @@ export function veracityApiFetch(
 }
 
 /**
+ * Coerce a candidate redirect value to a well-formed absolute `https:` URL, or `null`.
+ * The value here comes from the Veracity policy-validation response, which is trusted
+ * upstream content (reached server-side through the origin allow-list in
+ * `resolveVeracityApiUrl`, authenticated + subscription-keyed). This is therefore only a
+ * minimal sanity net — not host validation — ensuring a malformed or non-`https` value can
+ * never flow through to a client-side redirect.
+ */
+function sanitizePolicyRedirect(candidate: unknown): string | null {
+  if (typeof candidate !== "string" || candidate.trim() === "") {
+    return null;
+  }
+  try {
+    const url = new URL(candidate.trim());
+    return url.protocol === "https:" ? url.toString() : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Parse the redirect URL from a Veracity policy-validation 406 response. The body/headers
- * carry the URL the user must visit to accept a policy or add a subscription.
+ * carry the URL the user must visit to accept a policy or add a subscription. The value is
+ * trusted upstream content (see `sanitizePolicyRedirect`) but is still constrained to a
+ * well-formed absolute `https:` URL before it is surfaced to the client.
  */
 export async function parsePolicyRedirect(response: Response): Promise<string | null> {
   const location = response.headers.get("location");
   if (location) {
-    return location;
+    return sanitizePolicyRedirect(location);
   }
   try {
     const body = (await response.clone().json()) as { url?: string; redirectUrl?: string };
-    return body.url ?? body.redirectUrl ?? null;
+    return sanitizePolicyRedirect(body.url ?? body.redirectUrl ?? null);
   } catch {
     return null;
   }

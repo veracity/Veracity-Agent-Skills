@@ -15,7 +15,8 @@ an optional `.env` file.
 
 `.env` is listed in `.gitignore`. **Never commit a real `.env`** and **never ask the user to
 paste a secret value into the chat**. When applying this skill, generate local-only values such as
-`SESSION_SECRET` directly into `.env`; only leave placeholders for secrets that must come from the
+`SESSION_SECRET` by running a command that writes them **directly** into `.env` — never emit or
+print the secret value yourself; only leave placeholders for secrets that must come from the
 user or Key Vault.
 
 ## The settings model
@@ -57,7 +58,9 @@ When applying this skill:
 1. Work from the resolved project directory (`src/{project-slug}-web` for OIDC or
    `src/{project-slug}-api` for JWT).
 2. Copy `.env.example` to `.env`.
-3. Generate a strong `SESSION_SECRET` for OIDC projects and write it into `.env`.
+3. For OIDC projects, generate a strong `SESSION_SECRET` by running a command that writes it
+   **directly** into `.env` so the value never appears in your output (it replaces the
+   `.env.example` placeholder line): `python -c "import secrets,re,pathlib; p=pathlib.Path('.env'); p.write_text(re.sub(r'(?m)^SESSION_SECRET=.*$', 'SESSION_SECRET='+secrets.token_urlsafe(32), p.read_text()))"`. Never echo or print the generated value.
 4. The local cert/key pair is generated **automatically**: the `veracity-dev` launcher calls
    `scripts/generate_dev_cert.py` on startup when the files at `HTTPS_CERT_FILE` / `HTTPS_KEY_FILE`
    are missing (default: `.certs/localhost.pem` and `.certs/localhost-key.pem`). You can also run it
@@ -71,7 +74,9 @@ When applying this skill:
 ```bash
 cd src/{project-slug}-{web|api}
 Copy-Item .env.example .env     # Windows PowerShell (or: cp .env.example .env)
-# generate SESSION_SECRET for OIDC, then edit .env: set CLIENT_ID / JWT_AUDIENCE and any
+# For OIDC, generate SESSION_SECRET with a command that writes it directly into .env (never print it):
+#   python -c "import secrets,re,pathlib; p=pathlib.Path('.env'); p.write_text(re.sub(r'(?m)^SESSION_SECRET=.*$', 'SESSION_SECRET='+secrets.token_urlsafe(32), p.read_text()))"
+# then edit .env: set CLIENT_ID / JWT_AUDIENCE and any
 # remaining user-managed secret values. The localhost cert/key is created automatically.
 uv run veracity-dev            # generates .certs/localhost*.pem on first run, then serves HTTPS
 ```

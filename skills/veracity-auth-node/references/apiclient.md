@@ -28,22 +28,38 @@ Ask the user: **which API version(s)** — V3, V4, or both? Default: **both**.
 
 ## Phase 4b: GENERATE — download specs + generate types
 
-Create `src/veracity/specs/` and download the latest specs (fall back to a manual download if
-needed):
+> **Trusted first-party source.** `docs.veracity.com` is Veracity's own official, documented
+> OpenAPI endpoint — the canonical source for these specs and the same trust boundary as this
+> skill. The two spec URLs below are the only external URLs this step fetches; both are HTTPS and
+> host-pinned to `docs.veracity.com`. The downloaded JSON is written to `src/veracity/specs/` and
+> **committed**, so it is reviewable in the PR diff rather than silently re-fetched.
+>
+> **Codegen output is types-only.** `openapi-typescript` emits TypeScript **declaration files**
+> (`.d.ts`) that are fully erased at compile time and produce **no runtime JavaScript**. The
+> downloaded spec therefore shapes compile-time types only — it never becomes executed code. The
+> runtime client is the committed, hand-written `veracityApiClient.ts` + `openapi-fetch`.
+
+Create `src/veracity/specs/` and download the latest specs from the pinned first-party host. The
+`--proto '=https'` / `--tlsv1.2` flags refuse any non-HTTPS redirect, and the JSON validity check
+ensures a corrupted or hijacked response can never flow into codegen (fall back to a manual
+browser download into `src/veracity/specs/` if the fetch fails):
 
 ```bash
 # V3 (if generating V3)
-curl -sf -H "Accept: application/json" \
+curl -sf --proto '=https' --tlsv1.2 -H "Accept: application/json" \
   "https://docs.veracity.com/api/transformer/apispecs/veracity-myservices-v3" \
   -o src/veracity/specs/ApiV3.json
+node -e "const s=require('./src/veracity/specs/ApiV3.json'); if(!(s.openapi||s.swagger)) throw new Error('ApiV3.json is not a valid OpenAPI document')"
 
 # V4 (if generating V4)
-curl -sf -H "Accept: application/json" \
+curl -sf --proto '=https' --tlsv1.2 -H "Accept: application/json" \
   "https://docs.veracity.com/api/transformer/apispecs/ApiV4Prod" \
   -o src/veracity/specs/ApiV4.json
+node -e "const s=require('./src/veracity/specs/ApiV4.json'); if(!(s.openapi||s.swagger)) throw new Error('ApiV4.json is not a valid OpenAPI document')"
 ```
 
-Install and run the type generator:
+Review the downloaded `src/veracity/specs/*.json` diff (and commit it) before generating types, so
+the spec that drives codegen is auditable. Then install and run the type generator:
 
 ```bash
 npm install -D openapi-typescript
@@ -147,6 +163,16 @@ Only include the V3 and/or V4 lines that match the user's choice.
 
   All adapters use the shared `veracityApiFetch` + `parsePolicyRedirect` helpers plus a
   framework-specific `userApiToken` (the raw-fetch equivalent of the .NET delegating handler).
+
+  > **`redirectUrl` trust boundary.** The `redirectUrl` surfaced by the `policy/validate`
+  > endpoints is read (from the `location` header or the JSON `url` / `redirectUrl` field) only
+  > from the Veracity V3/V4 policy-validation response — trusted upstream content reached
+  > server-side through the origin allow-list in `resolveVeracityApiUrl` (authenticated +
+  > subscription-keyed). It is **not** caller-supplied free text. As a minimal sanity net,
+  > `parsePolicyRedirect` still coerces the value to a well-formed absolute `https:` URL and
+  > returns `null` otherwise, so a malformed or non-`https` value can never reach a client-side
+  > redirect. (The OIDC `returnUrl`, which *is* caller-supplied, is separately constrained to a
+  > root-relative path by `safeReturnUrl` — see references/oidc.md.)
 
   > **Contract note:** the frontend (`veracity-auth-ui`) calls `GET /api/v1/veracity/v3/services`
   > and `GET /api/v1/veracity/v4/me/applications`, and detects BFF capability by grepping the
@@ -257,5 +283,7 @@ signed-in user (OIDC BFF).
 ## Regeneration note (for README)
 
 Document that the typed client is generated from the OpenAPI specs and regenerated with
-`npm run veracity:gen` after downloading updated specs. The generated `*.d.ts` files are
-committed; do not edit them by hand.
+`npm run veracity:gen` after downloading updated specs. `veracity:gen` reads the **committed local
+`src/veracity/specs/*.json`** — it does **not** hit the network; only the one-time Phase 4b
+GENERATE step downloads from the pinned first-party host `docs.veracity.com`. The generated
+`*.d.ts` files are committed; do not edit them by hand.
