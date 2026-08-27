@@ -29,7 +29,7 @@ no on-behalf-of exchange (Azure AD B2C does not reliably support OBO). The
 
 from __future__ import annotations
 
-from urllib.parse import quote
+from urllib.parse import quote, urlsplit
 
 import httpx
 
@@ -81,14 +81,37 @@ def get_my_applications(settings: Settings, user_access_token: str):
     return _get_json(client, "/me/applications")
 
 
+def _sanitize_policy_redirect(candidate: object) -> str | None:
+    """Constrain a policy redirect candidate to a well-formed absolute ``https`` URL, else ``None``.
+
+    The value comes from the Veracity V3/V4 policy-validation response — trusted upstream content
+    reached server-side through the origin allow-list in the API client (authenticated +
+    subscription-keyed), **not** caller-supplied free text. This is only a minimal sanity net that
+    ensures a malformed or non-``https`` value can never flow through to a client-side redirect.
+    """
+    if not isinstance(candidate, str) or not candidate.strip():
+        return None
+    value = candidate.strip()
+    parts = urlsplit(value)
+    if parts.scheme == "https" and parts.netloc:
+        return value
+    return None
+
+
 def _parse_policy_redirect(resp: httpx.Response) -> str | None:
-    """Extract the policy-acceptance URL from a response body (``url``/``redirectUrl``/``information``)."""
+    """Extract the policy-acceptance URL from a response body (``url``/``redirectUrl``/``information``).
+
+    The extracted value is trusted upstream content (see :func:`_sanitize_policy_redirect`) but is
+    still constrained to a well-formed absolute ``https`` URL before it is surfaced to the client.
+    """
     try:
         body = resp.json()
     except ValueError:
         return None
     if isinstance(body, dict):
-        return body.get("url") or body.get("redirectUrl") or body.get("information")
+        return _sanitize_policy_redirect(
+            body.get("url") or body.get("redirectUrl") or body.get("information")
+        )
     return None
 
 

@@ -13,21 +13,37 @@ adapters all call the same client.
 ### 1. Typed client — analog of NSwag
 
 Generate a typed, Pydantic-based httpx client from the Veracity OpenAPI spec using
-**`openapi-python-client`**:
+**`openapi-python-client`**.
+
+> **Trusted first-party source.** `docs.veracity.com` is Veracity's own official, documented
+> OpenAPI endpoint — the canonical source for these specs and the same trust boundary as this
+> skill. The URLs below are HTTPS and host-pinned to `docs.veracity.com`. Download the spec to a
+> local file, **validate it**, and generate from that local file (not straight from the URL) so the
+> exact spec that drives codegen is committed and reviewable in the PR diff. `openapi-python-client`
+> generates real Python client code, so **commit both the downloaded spec and the generated package
+> and review them** — treat regeneration like any other code change.
 
 ```bash
 pip install openapi-python-client
+mkdir -p veracity_specs
 
 # V4 — Veracity Platform API
-openapi-python-client generate --url https://docs.veracity.com/api/transformer/apispecs/ApiV4Prod
+curl -sf --proto '=https' --tlsv1.2 -H "Accept: application/json" \
+  "https://docs.veracity.com/api/transformer/apispecs/ApiV4Prod" -o veracity_specs/ApiV4.json
+python -c "import json,sys; s=json.load(open('veracity_specs/ApiV4.json')); sys.exit(0 if (s.get('openapi') or s.get('swagger')) else 'ApiV4.json is not a valid OpenAPI document')"
+openapi-python-client generate --path veracity_specs/ApiV4.json
 
 # V3 — Veracity MyServices
-openapi-python-client generate --url https://docs.veracity.com/api/transformer/apispecs/veracity-myservices-v3
+curl -sf --proto '=https' --tlsv1.2 -H "Accept: application/json" \
+  "https://docs.veracity.com/api/transformer/apispecs/veracity-myservices-v3" -o veracity_specs/ApiV3.json
+python -c "import json,sys; s=json.load(open('veracity_specs/ApiV3.json')); sys.exit(0 if (s.get('openapi') or s.get('swagger')) else 'ApiV3.json is not a valid OpenAPI document')"
+openapi-python-client generate --path veracity_specs/ApiV3.json
 ```
 
-If the live download fails, download the spec manually from the docs site and use
-`--path <spec.json>`. Commit the generated package; regenerate when the spec changes (document
-this in the project README, the same way the .NET skill does).
+If the live download fails, download the spec manually from the docs site into `veracity_specs/`
+and run the `openapi-python-client generate --path <spec.json>` step on its own. Commit the spec and
+the generated package; regenerate when the spec changes (document this in the project README, the
+same way the .NET skill does).
 
 | Spec | Download URL | Base URL (Production) |
 |------|--------------|-----------------------|
@@ -88,6 +104,15 @@ adapter (FastAPI `app/veracity/routes.py`, Flask `veracity_flask/veracity_api.py
 > service-specific and requires `SERVICE_ID`, while **V3** validates the user's Veracity-wide
 > policies and needs no service id — so keep just the one matching the chosen version (alongside
 > `v3/services` **or** `v4/me/applications`).
+
+> **`redirectUrl` trust boundary.** The `redirectUrl` returned by the `policy/validate` helpers is
+> read (from the JSON `url` / `redirectUrl` / `information` field) only from the Veracity V3/V4
+> policy-validation response — trusted upstream content reached server-side over the
+> subscription-keyed, authenticated Veracity API client — **not** caller-supplied free text. As a
+> minimal sanity net, `_parse_policy_redirect` coerces the value to a well-formed absolute `https`
+> URL via `_sanitize_policy_redirect` and returns `None` otherwise, so a malformed or non-`https`
+> value can never reach a client-side redirect. (The OIDC `returnUrl`, which *is* caller-supplied,
+> is separately constrained to a safe relative path during login — see references/oidc.md.)
 
 ### Keep only your chosen version (V3 **or** V4)
 
