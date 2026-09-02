@@ -34,9 +34,12 @@ export function registerApiV3Routes(app: Express): void {
 
   // Validate Veracity policies; a 406 means the user must accept a policy.
   app.get(`${BASE}/policy/validate`, requireAuth, async (req: Request, res: Response) => {
+    // `returnUrl` is where Veracity sends the user back after they accept an outstanding policy
+    // (mirrors the .NET SDK `my.ValidatePolicies(returnUrl)` and the V4 `return-url` param).
+    const returnUrl = `${req.protocol}://${req.get("host")}`;
     const upstream = await veracityApiFetch(
       "v3",
-      "/my/policies/validate()",
+      `/my/policies/validate()?returnUrl=${encodeURIComponent(returnUrl)}`,
       await userApiToken(req),
     );
     if (upstream.status === 406) {

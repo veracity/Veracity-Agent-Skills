@@ -45,9 +45,20 @@ export async function acquireUserApiToken(account: AccountInfo): Promise<string>
 
 function withAuthHeaders(headers: Headers, token: string): void {
   headers.set("Authorization", `Bearer ${token}`);
-  if (env.VERACITY_SUBSCRIPTION_KEY) {
-    headers.set("Ocp-Apim-Subscription-Key", env.VERACITY_SUBSCRIPTION_KEY);
+  // The Veracity Platform API (V3/V4) sits behind Azure API Management, which requires an
+  // Ocp-Apim-Subscription-Key on every call *in addition* to the bearer token. When the key is
+  // missing, APIM rejects the request with 401 — which the BFF proxy surfaces as an opaque
+  // 502 Bad Gateway (upstreamStatus 401). Fail fast here with an actionable message instead, so a
+  // forgotten key is diagnosed at the call site rather than as a confusing gateway error.
+  if (!env.VERACITY_SUBSCRIPTION_KEY) {
+    throw new Error(
+      "VERACITY_SUBSCRIPTION_KEY is not set. The Veracity Platform API (V3/V4) is behind Azure " +
+        "API Management and requires an Ocp-Apim-Subscription-Key header; without it the API " +
+        "returns 401. Set VERACITY_SUBSCRIPTION_KEY in .env.local — get the key from the " +
+        "Developer Portal (https://developer.veracity.com) -> your app resource -> Settings.",
+    );
   }
+  headers.set("Ocp-Apim-Subscription-Key", env.VERACITY_SUBSCRIPTION_KEY);
 }
 
 function authMiddleware(getAccessToken: GetAccessToken): Middleware {
@@ -94,13 +105,32 @@ function allowedApiOrigins(): Set<string> {
  * origin, so an upstream-influenced value cannot redirect the server-side request (CWE-918 SSRF).
  */
 export function resolveVeracityApiUrl(version: ApiVersion, path: string): URL {
-  if (typeof path !== "string" || !path.startsWith("/") || path.startsWith("//")) {
+  // Reject anything that is not a plain, single-slash root-relative path. Blocking `//host`,
+  // backslashes (`/\host`, normalized to `//` by the URL parser for special schemes), control
+  // characters, and any embedded scheme means `path` can only ever be a relative path — it can
+  // never carry an authority that redirects the request off-origin (CWE-918).
+  if (
+    typeof path !== "string" ||
+    !path.startsWith("/") ||
+    path.startsWith("//") ||
+    path.startsWith("/\\") ||
+    path.includes("\\") ||
+    path.includes("://") ||
+    // eslint-disable-next-line no-control-regex
+    /[\u0000-\u001f\u007f]/.test(path)
+  ) {
     throw new Error(
       `Invalid Veracity API path (must be a relative path starting with a single "/"): ${path}`,
     );
   }
-  const url = new URL(`${baseUrlFor(version)}${path}`);
-  if (!allowedApiOrigins().has(url.origin)) {
+  const base = baseUrlFor(version);
+  // Append the validated relative `path` to the trusted base. Because `path` is guaranteed to be a
+  // plain root-relative path (no authority, no scheme, no backslashes), the resulting origin is
+  // ALWAYS the base's origin and can never be influenced by the caller.
+  const url = new URL(`${base}${path}`);
+  // Defense-in-depth: re-assert the origin against the configured allow-list at the point the URL
+  // is built, so the ONLY thing that can ever reach fetch() is a configured Veracity origin.
+  if (url.origin !== new URL(base).origin || !allowedApiOrigins().has(url.origin)) {
     throw new Error(`Refusing to call a non-allow-listed Veracity API origin: ${url.origin}`);
   }
   return url;
@@ -119,6 +149,11 @@ export function veracityApiFetch(
   method: "GET" | "POST" = "GET",
 ): Promise<Response> {
   const url = resolveVeracityApiUrl(version, path);
+  // Inline SSRF guard at the sink: even though resolveVeracityApiUrl already validated the origin,
+  // re-assert it here so the neutralization is visible in the same function as the fetch() call.
+  if (!allowedApiOrigins().has(url.origin)) {
+    throw new Error(`Refusing to fetch non-allow-listed Veracity API origin: ${url.origin}`);
+  }
   const headers = new Headers();
   withAuthHeaders(headers, token);
   headers.set("Accept", "application/json");
