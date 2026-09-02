@@ -128,7 +128,12 @@ Only include the V3 and/or V4 lines that match the user's choice.
   `userApiToken(req)` that reads the signed-in user's MSAL account from the session. Together they add:
   - `Authorization: Bearer <token>` — token from MSAL `acquireTokenSilent` for the Veracity
     API scope (passed in via `getAccessToken`, sourced from the user's session).
-  - `Ocp-Apim-Subscription-Key: <key>` — from `env.VERACITY_SUBSCRIPTION_KEY`.
+  - `Ocp-Apim-Subscription-Key: <key>` — from `env.VERACITY_SUBSCRIPTION_KEY`. The Veracity
+    Platform API sits behind Azure API Management, which **requires** this header in addition to
+    the bearer token; without it APIM rejects every call with **401** (surfaced by the BFF proxy as
+    a **502 Bad Gateway** with `upstreamStatus: 401`). `withAuthHeaders` therefore **throws an
+    actionable error** when the key is unset, so a forgotten key is diagnosed at the call site
+    rather than as an opaque gateway error. Set the key in `.env.local` (see Configure below).
 
   Import the generated `paths` types (`apiV3.d.ts` / `apiV4.d.ts`) to type the client. Remove
   the V3 or V4 branch if only one was requested.
@@ -137,9 +142,12 @@ Only include the V3 and/or V4 lines that match the user's choice.
   > **relative** path only. It resolves `path` against the configured version base URL and
   > validates the resulting URL's origin against an allow-list derived from
   > `VERACITY_API_V3_BASE_URL` / `VERACITY_API_V4_BASE_URL` (via `resolveVeracityApiUrl`), rejecting
-  > absolute URLs, protocol-relative `//host` authorities, and any value that resolves off the
-  > Veracity origin **before** the request is issued. Never build the outbound URL by concatenating
-  > a caller-influenced value without this validation, and always keep call sites passing
+  > absolute URLs, protocol-relative `//host` authorities, backslashes (`\`, `/\host`), embedded
+  > schemes (`://`), control characters, and any value that resolves off the Veracity origin
+  > **before** the request is issued. The origin allow-list is also re-asserted inline at the
+  > `fetch` sink so the neutralization is visible in the same function as the call (helps static
+  > taint scanners recognize the guard). Never build the outbound URL by concatenating a
+  > caller-influenced value without this validation, and always keep call sites passing
   > `encodeURIComponent`-escaped relative segments (e.g. `tenantId`).
 
 - **`apiV3Routes.ts`** — the BFF proxy endpoints (require auth). Exposed under the **same
@@ -150,7 +158,7 @@ Only include the V3 and/or V4 lines that match the user's choice.
   |----------|---------------|-------------|
   | `GET /api/v1/veracity/v3/services` | `/my/services` | Services the current user can access |
   | `GET /api/v1/veracity/v3/notifications/count` | `/my/messages/count` | Notification count for the current user |
-  | `GET /api/v1/veracity/v3/policy/validate` | `/my/policies/validate()` | On `406` returns `{ compliant: false, redirectUrl }` |
+  | `GET /api/v1/veracity/v3/policy/validate` | `/my/policies/validate()?returnUrl=<app-url>` | On `406` returns `{ compliant: false, redirectUrl }` (`returnUrl` is where Veracity sends the user back after accepting a policy) |
 
 - **`apiV4Routes.ts`** — the BFF proxy endpoints (require auth), mirroring `VeracityV4Endpoints.cs`:
 
@@ -267,6 +275,20 @@ VERACITY_SUBSCRIPTION_KEY=YOUR_SUBSCRIPTION_KEY_HERE
 - `GET /api/v1/veracity/v3/notifications/count` returns a count (V3).
 - `GET /api/v1/veracity/v3/policy/validate` (or `.../v4/policy/validate`) returns
   `{ compliant: true }`, or `{ compliant: false, redirectUrl }` when the API responds `406`.
+
+---
+
+## Phase 4f: TROUBLESHOOTING
+
+The BFF proxy relays upstream failures as `502 Bad Gateway` with an `upstreamStatus` extension.
+Map the upstream status to the cause:
+
+| Symptom | Upstream status | Cause & fix |
+|---------|-----------------|-------------|
+| `GET .../v3/services` (or any `my/*` / `me/*` call) fails with `502`, `upstreamStatus: 401` | `401` | **Missing or invalid `Ocp-Apim-Subscription-Key`.** The Veracity Platform API is behind Azure API Management and requires the subscription key on every call. Set `VERACITY_SUBSCRIPTION_KEY` in `.env.local` (Developer Portal → your app → Settings) and restart. With this skill the BFF now **fails fast** with a clear error instead of forwarding an opaque 401. (A `401` *after* the key is set means the bearer token/scope is wrong — check `VERACITY_API_SCOPE`.) |
+| `policy/validate` fails with `502`, `upstreamStatus: 404` | `404` | **Wrong endpoint path or base URL.** The V3 policy endpoint is `my/policies/validate()` (OData function-call syntax — the trailing `()` is required) with a `returnUrl` query param; a plain `my/policies/validate` returns 404. Verify `VERACITY_API_V3_BASE_URL` / `VERACITY_API_V4_BASE_URL` point at the correct environment (Production vs Test/Staging). |
+| `policy/validate` returns `{ compliant: false, redirectUrl }` | `406` (V3/V4) or `403` w/ redirect (V4) | **Not an error** — the user must accept an outstanding policy or complete a subscription. Redirect the browser to `redirectUrl`; after acceptance the user returns to the app's `returnUrl`. |
+| Any call fails with `Refusing to call a non-allow-listed Veracity API origin` | — | The requested path resolved off the configured Veracity origin (SSRF guard). Ensure paths passed to `veracityApiFetch` are **relative** (start with a single `/`) and the base URLs are set correctly. |
 
 ---
 

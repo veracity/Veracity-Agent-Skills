@@ -43,9 +43,12 @@ export class VeracityV3Controller {
   // Validate Veracity policies; a 406 means the user must accept a policy.
   @Get("policy/validate")
   async policy(@Req() req: Request, @Res() res: ExpressResponse): Promise<void> {
+    // `returnUrl` is where Veracity sends the user back after they accept an outstanding policy
+    // (mirrors the .NET SDK `my.ValidatePolicies(returnUrl)` and the V4 `return-url` param).
+    const returnUrl = `${req.protocol}://${req.get("host")}`;
     const upstream = await this.veracity.fetch(
       "v3",
-      "/my/policies/validate()",
+      `/my/policies/validate()?returnUrl=${encodeURIComponent(returnUrl)}`,
       await this.veracity.userApiToken(req),
     );
     if (upstream.status === 406) {

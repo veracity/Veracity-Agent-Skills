@@ -42,9 +42,12 @@ export const apiV3Routes: FastifyPluginAsync = async (fastify: FastifyInstance) 
 
   // Validate Veracity policies; a 406 means the user must accept a policy.
   fastify.get(`${BASE}/policy/validate`, { preHandler: requireAuth }, async (request, reply) => {
+    // `returnUrl` is where Veracity sends the user back after they accept an outstanding policy
+    // (mirrors the .NET SDK `my.ValidatePolicies(returnUrl)` and the V4 `return-url` param).
+    const returnUrl = `${request.protocol}://${request.host}`;
     const upstream = await veracityApiFetch(
       "v3",
-      "/my/policies/validate()",
+      `/my/policies/validate()?returnUrl=${encodeURIComponent(returnUrl)}`,
       await userApiToken(request),
     );
     if (upstream.status === 406) {
