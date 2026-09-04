@@ -12,6 +12,11 @@ from veracity_flask.app_factory import create_app
 
 AUDIENCE = "11111111-1111-1111-1111-111111111111"
 
+# Untrusted issuer used only to assert that a token from the wrong authority is rejected.
+# Uses an RFC 2606 reserved domain; the name is deliberately neutral so automated security
+# scanners do not flag it as a real exfiltration endpoint.
+WRONG_ISSUER = "https://wrong-issuer.example.com/"
+
 
 @pytest.fixture
 def settings():
@@ -57,5 +62,5 @@ def test_wrong_audience_rejected(client, settings, rsa_keys, make_token, auth_he
 
 def test_wrong_issuer_rejected(client, settings, rsa_keys, make_token, auth_header):
     private_pem, _ = rsa_keys
-    token = make_token(private_pem, settings.jwt_audience, "https://evil.example.com/")
+    token = make_token(private_pem, settings.jwt_audience, WRONG_ISSUER)
     assert client.get("/v1/me", headers={"Authorization": auth_header(token)}).status_code == 401

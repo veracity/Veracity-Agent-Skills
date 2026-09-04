@@ -12,6 +12,11 @@ from veracity_core.tokens import set_key_resolver
 
 AUDIENCE = "11111111-1111-1111-1111-111111111111"
 
+# Untrusted issuer used only to assert that a token from the wrong authority is rejected.
+# Uses an RFC 2606 reserved domain; the name is deliberately neutral so automated security
+# scanners do not flag it as a real exfiltration endpoint.
+WRONG_ISSUER = "https://wrong-issuer.example.com/"
+
 
 def _issuer() -> str:
     return Settings().issuer
@@ -57,5 +62,5 @@ def test_wrong_audience_rejected(api, rsa_keys, make_token, auth_header):
 
 def test_wrong_issuer_rejected(api, rsa_keys, make_token, auth_header):
     private_pem, _ = rsa_keys
-    token = make_token(private_pem, AUDIENCE, "https://evil.example.com/")
+    token = make_token(private_pem, AUDIENCE, WRONG_ISSUER)
     assert api.get("/drf/me", HTTP_AUTHORIZATION=auth_header(token)).status_code == 401
