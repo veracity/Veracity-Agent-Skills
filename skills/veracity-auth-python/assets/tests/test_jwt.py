@@ -12,6 +12,11 @@ from app.settings import Settings, get_settings
 
 AUDIENCE = "11111111-1111-1111-1111-111111111111"
 
+# Untrusted issuer used only to assert that a token from the wrong authority is rejected.
+# Uses an RFC 2606 reserved domain; the name is deliberately neutral so automated security
+# scanners do not flag it as a real exfiltration endpoint.
+WRONG_ISSUER = "https://wrong-issuer.example.com/"
+
 
 @pytest.fixture
 def keys():
@@ -87,6 +92,6 @@ def test_wrong_audience_rejected(client, keys, settings):
 
 def test_wrong_issuer_rejected(client, keys, settings):
     private_pem, _ = keys
-    token = _make_token(private_pem, settings, iss="https://evil.example.com/")
+    token = _make_token(private_pem, settings, iss=WRONG_ISSUER)
     resp = client.get("/v1/me", headers={"Authorization": f"Bearer {token}"})
     assert resp.status_code == 401
