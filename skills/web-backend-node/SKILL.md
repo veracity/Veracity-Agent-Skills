@@ -1,6 +1,7 @@
 ---
 name: web-backend-node
 description: "Scaffold a new NodeJS (Express 5 + TypeScript) web backend with the standard baseline capabilities every backend service needs: zod-validated env config with .env layering, helmet security headers with a Content-Security-Policy, health checks (live/ready), a versioned API router anchor (/api/v1), a global error handler, optional HTTPS for local dev, ESLint/Prettier, and vitest + supertest. USE THIS SKILL whenever the user wants to create a new NodeJS or Express backend, bootstrap a Node API service, scaffold a Node/Express + TypeScript web project skeleton, or needs a clean Node baseline project to build on. This skill does NOT add authentication — it produces an unauthenticated baseline. For Veracity login/JWT on a Node backend, use veracity-auth-node (which calls this skill first when no project exists)."
+license: Apache-2.0
 ---
 
 # NodeJS Web Backend Scaffolding

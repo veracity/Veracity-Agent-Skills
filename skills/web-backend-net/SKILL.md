@@ -1,6 +1,7 @@
 ---
 name: web-backend-net
 description: "Scaffold a new .NET 10 Minimal API web project with the standard baseline capabilities every backend service needs: API versioning (URL segment + header), OpenAPI/Swagger, FluentValidation, health checks (live/ready), a Content-Security-Policy and security-headers middleware, a global ProblemDetails error handler, per-environment appsettings, and HTTPS launch settings. USE THIS SKILL whenever the user wants to create a new .NET 10 minimal API project, bootstrap a backend service, scaffold a web API skeleton, set up a new .NET web project with sensible defaults, or needs a clean baseline project to build on. This skill does NOT add authentication — it produces an unauthenticated baseline."
+license: Apache-2.0
 ---
 
 # .NET Web Backend Scaffolding

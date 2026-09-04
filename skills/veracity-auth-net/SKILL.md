@@ -1,6 +1,7 @@
 ---
 name: veracity-auth-net
 description: "Add Veracity authentication to a .NET 8 or later backend: OpenID Connect (BFF/cookie sessions, default) or JWT Bearer (stateless token validation), plus optional Veracity V3/V4 API calls for the signed-in user. Integrates using the existing project's style — Minimal API or MVC Controllers — and scaffolds a .NET 10 Minimal API baseline via web-backend-net if no project exists. USE THIS whenever the user wants Veracity login/auth on a .NET app, a Veracity BFF, a .NET API that validates Veracity JWT bearer tokens, Veracity OpenID Connect / cookie sessions, or Veracity V3/V4 integration from a .NET backend. Do NOT use for: a plain .NET baseline with no Veracity (use web-backend-net); a complete/full web app or 'web app with Veracity login' that also needs a frontend UI (use veracity-auth-ui, which calls this skill for the BFF); Veracity login/profile widgets on a frontend or React/SPA (use veracity-auth-ui); non-.NET backends; or non-Veracity providers (Entra ID, Auth0, IdentityServer)."
+license: Apache-2.0
 ---
 
 # Veracity Authentication for .NET
