@@ -2,6 +2,7 @@
 name: veracity-auth-ui
 description: >-
   Use this skill whenever the user wants Veracity login on a frontend or a complete Veracity web app. It adds Sign In/Out, user profile, and the user's Veracity services/applications (V3/V4) to a React (or other) SPA, wired to a Veracity BFF (/auth, /auth/challenge, /signout, /api/me) in .NET, Node, or Python. It scaffolds the frontend via web-base-ui and creates the BFF via veracity-auth-net (.NET default), veracity-auth-node, or veracity-auth-python when none exists, so it is the entry point for a full web app (frontend + backend): prefer it over the backend-only auth skills whenever the user asks for a "web app" or full application. Trigger it even without the word "Veracity": phrasings like "web app with login and show my applications", "add sign-in and list my applications", or "web app with Veracity authentication and V4 integration" map here. If a Veracity BFF already exists, use this skill to wire the frontend to it; for a plain unauthenticated frontend, use web-base-ui.
+license: Apache-2.0
 ---
 
 # Veracity Login Web App (authentication layer)

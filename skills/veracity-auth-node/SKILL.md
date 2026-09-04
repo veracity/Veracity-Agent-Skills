@@ -1,6 +1,7 @@
 ---
 name: veracity-auth-node
 description: "Add Veracity authentication to a NodeJS (TypeScript) backend built with Express, Fastify, or NestJS: OpenID Connect (BFF/cookie sessions via @azure/msal-node, default) or JWT Bearer (stateless token validation via jose), plus an optional Veracity Platform API V3/V4 client with BFF proxy endpoints. Integrates into an existing Node project (auto-detecting the framework), and scaffolds an Express baseline via web-backend-node if none exists. USE THIS whenever the user wants Veracity login/auth on a Node app, a Node Veracity BFF, a Node API validating Veracity JWT bearer tokens, Veracity OpenID Connect / cookie sessions, or Veracity V3/V4 integration from a Node backend. Do NOT use for: a plain Node baseline with no Veracity (use web-backend-node); a full web app that also needs a frontend UI or Veracity widgets on a React/SPA (use veracity-auth-ui); non-Node backends (use veracity-auth-net or veracity-auth-python); or non-Veracity providers (Entra ID, Auth0, IdentityServer)."
+license: Apache-2.0
 ---
 
 # Veracity Authentication for NodeJS

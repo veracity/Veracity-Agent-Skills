@@ -2,6 +2,7 @@
 name: web-base-ui
 description: >-
   Scaffold a new frontend web project with the standard baseline every SPA needs: a React + Vite + TypeScript app (or a user-specified stack), a generated package.json with versions resolved from the npm registry, TypeScript + Vite config, a welcome page, and a selectable design system (ShadCN by default, or an existing/user-named design system such as MUI, Chakra, Ant, VUI, or a Google Stitch design.md). USE THIS SKILL whenever the user wants to create a new frontend project, bootstrap a React/Vite app, scaffold a web UI skeleton, set up a single-page app with sensible defaults, or needs a clean frontend baseline to build on. This skill does NOT add authentication or any backend integration — it produces an unauthenticated welcome-page baseline. For Veracity login (sign in/out, profile, services/applications) on top of a frontend, use the veracity-auth-ui skill, which calls this skill to scaffold first when no frontend project exists.
+license: Apache-2.0
 ---
 
 # Frontend Web UI Scaffolding (welcome-page baseline)

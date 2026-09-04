@@ -1,6 +1,8 @@
 ---
 name: veracity-auth-python
 description: "Add Veracity authentication to a Python backend built with FastAPI, Flask, or Django (incl. DRF): OpenID Connect (BFF/cookie sessions, default) or JWT Bearer (stateless token validation), plus an optional Veracity Platform API V3/V4 client with BFF proxy endpoints. Integrates into an existing project (auto-detecting the framework) and scaffolds a FastAPI baseline via web-backend-python if no project exists. USE THIS whenever the user wants Veracity login/auth on a Python app, a Python Veracity BFF, a Python API that validates Veracity JWT bearer tokens, Veracity OpenID Connect / cookie sessions in FastAPI/Flask/Django, B2C setup in Python, or Veracity V3/V4 integration from a Python backend. Do NOT use for: a plain Python baseline with no Veracity (use web-backend-python); a full web app that also needs a frontend UI, or Veracity widgets on a React/SPA (use veracity-auth-ui); non-Python backends (use veracity-auth-net or veracity-auth-node); or non-Veracity providers."
+license: Apache-2.0
+compatibility: "Requires outbound network/internet access: the generated backend calls Veracity Azure AD B2C (login.veracity.com) and the Veracity Platform API (api.veracity.com) over HTTPS via httpx and msal."
 ---
 
 # Veracity Auth Python — FastAPI / Flask / Django + Veracity Identity

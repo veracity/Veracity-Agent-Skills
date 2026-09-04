@@ -1,6 +1,7 @@
 ---
 name: web-backend-python
 description: "Scaffold a new FastAPI (Python) web/API project with the standard baseline capabilities every backend service needs: OpenAPI/Swagger (built-in /docs), Pydantic v2 validation, a versioned /api/v1 router group, health checks (live/ready), a Content-Security-Policy and security-headers middleware, a global RFC 9457 ProblemDetails error handler, pydantic-settings configuration, and an HTTPS-first local dev server. USE THIS SKILL whenever the user wants to create a new FastAPI project, bootstrap a Python backend service, scaffold a web API skeleton, set up a new Python web project with sensible defaults, or needs a clean baseline project to build on. This skill does NOT add authentication — it produces an unauthenticated baseline. For Veracity login/JWT/API integration on top of a Python backend, use the veracity-auth-python skill (which calls this skill to scaffold first when no project exists)."
+license: Apache-2.0
 ---
 
 # Python Web Backend Scaffolding
